@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NDA Review - ConfDoc Screenshot</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500&display=swap');
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-weight: 200;
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            min-height: 100vh;
+            color: white;
+            width: 1200px;
+            height: 800px;
+            overflow: hidden;
+            transform: scale(0.8);
+            transform-origin: top left;
+        }
+
+        .container {
+            padding: 40px;
+            width: calc(100% - 80px);
+            height: calc(100% - 80px);
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            gap: 15px;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            position: relative;
+        }
+
+        .logo svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: 200;
+            letter-spacing: 2px;
+        }
+
+        .logo-text .conf {
+            color: #00EAFD;
+        }
+
+        .logo-text .doc {
+            color: white;
+        }
+
+        .logo-subtitle {
+            font-size: 9px;
+            color: #00EAFD;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-top: -2px;
+            font-weight: 300;
+        }
+
+        .main-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            height: calc(100% - 120px);
+        }
+
+        .title {
+            font-size: 32px;
+            font-weight: 200;
+            margin-bottom: 30px;
+            color: white;
+            letter-spacing: 1px;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 30px;
+            height: calc(100% - 80px);
+        }
+
+        .section-header {
+            font-size: 20px;
+            font-weight: 300;
+            margin-bottom: 20px;
+            color: white;
+            letter-spacing: 0.5px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 25px;
+            position: relative;
+            height: fit-content;
+        }
+
+        .provision-card {
+            min-height: 250px;
+        }
+
+        .provision-title {
+            font-size: 18px;
+            font-weight: 300;
+            margin-bottom: 15px;
+            color: #00EAFD;
+            letter-spacing: 0.5px;
+        }
+
+        .provision-text {
+            font-size: 14px;
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 200;
+        }
+
+        .highlight {
+            color: #ff6b6b;
+            font-weight: 300;
+        }
+
+        .benchmark-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .toggle-checkbox {
+            width: 20px;
+            height: 20px;
+            background: #00EAFD;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0f2027;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .benchmark-card {
+            background: rgba(0, 234, 253, 0.08);
+            border: 1px solid rgba(0, 234, 253, 0.25);
+            min-height: 200px;
+        }
+
+        .score-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0, 234, 253, 0.15);
+            border: 1px solid #00EAFD;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 300;
+            color: #00EAFD;
+        }
+
+        .benchmark-title {
+            font-size: 16px;
+            font-weight: 300;
+            margin-bottom: 10px;
+            color: white;
+            letter-spacing: 0.5px;
+        }
+
+        .benchmark-text {
+            font-size: 14px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 200;
+        }
+
+        .edit-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .edit-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            padding: 12px 20px;
+            color: white;
+            font-size: 14px;
+            font-weight: 200;
+            cursor: pointer;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+
+        .suggested-edit {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .edit-text {
+            font-size: 14px;
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 200;
+        }
+
+        .edit-highlight {
+            color: #00EAFD;
+            font-weight: 300;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo-container">
+            <div class="logo">
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <g fill="none" stroke-width="1.5" opacity="0.8">
+                        <ellipse cx="50" cy="50" rx="45" ry="35" stroke="#00EAFD" opacity="0.7"/>
+                        <ellipse cx="50" cy="50" rx="35" ry="25" stroke="#00EAFD" opacity="0.6"/>
+                        <ellipse cx="50" cy="50" rx="25" ry="18" stroke="#00EAFD" opacity="0.5"/>
+                        <ellipse cx="50" cy="50" rx="15" ry="12" stroke="#00EAFD" opacity="0.4"/>
+                        
+                        <path d="M 8 25 Q 50 20 92 25" stroke="#00EAFD" opacity="0.6"/>
+                        <path d="M 12 35 Q 50 30 88 35" stroke="#00EAFD" opacity="0.5"/>
+                        <path d="M 8 50 Q 50 45 92 50" stroke="#00EAFD" opacity="0.7"/>
+                        <path d="M 12 65 Q 50 70 88 65" stroke="#00EAFD" opacity="0.5"/>
+                        <path d="M 8 75 Q 50 80 92 75" stroke="#00EAFD" opacity="0.6"/>
+                        
+                        <path d="M 25 8 Q 30 50 25 92" stroke="#00EAFD" opacity="0.5"/>
+                        <path d="M 35 12 Q 40 50 35 88" stroke="#00EAFD" opacity="0.4"/>
+                        <path d="M 50 5 Q 50 50 50 95" stroke="#00EAFD" opacity="0.6"/>
+                        <path d="M 65 12 Q 60 50 65 88" stroke="#00EAFD" opacity="0.4"/>
+                        <path d="M 75 8 Q 70 50 75 92" stroke="#00EAFD" opacity="0.5"/>
+                    </g>
+                </svg>
+            </div>
+            <div>
+                <div class="logo-text">
+                    <span class="conf">Conf</span><span class="doc">Doc</span>
+                </div>
+                <div class="logo-subtitle">A STRATUM APPLICATION</div>
+            </div>
+        </div>
+
+        <div class="main-container">
+            <h1 class="title">NDA Review</h1>
+            
+            <div class="content-grid">
+                <!-- Parsed Provisions -->
+                <div>
+                    <h2 class="section-header">Parsed Provisions</h2>
+                    <div class="card provision-card">
+                        <div class="provision-title">Section 3.<br>Return of Confidential Information</div>
+                        <div class="provision-text">
+                            Upon the disclosing party's request, the receiving party shall 
+                            immediately <span class="highlight">return or destroy all Confidential Information</span>.<br><br>
+                            within 60 days; provided, however, that the receiving party may 
+                            retain one archival copy for compliance purposes.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Related Benchmarks -->
+                <div>
+                    <h2 class="section-header">Related Benchmarks</h2>
+                    <div class="benchmark-toggle">
+                        <div class="toggle-checkbox">✓</div>
+                        <span style="font-weight: 200;">Enable Benchmark</span>
+                    </div>
+                    <div class="card benchmark-card">
+                        <div class="score-badge">0.73</div>
+                        <div class="benchmark-title">Section 3.<br>Return of Confidential Information</div>
+                        <div class="benchmark-text">
+                            Upon the disclosing party's request, the receiving party shall 
+                            <span class="highlight">immediately</span> return or destroy all 
+                            Confidential Information.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Suggested Edits -->
+                <div>
+                    <h2 class="section-header">Suggested Edits</h2>
+                    <div class="edit-buttons">
+                        <div class="edit-btn">Minimal edit</div>
+                        <div class="edit-btn">Standard fix</div>
+                        <div class="edit-btn">Benchmark swap</div>
+                    </div>
+                    
+                    <h3 class="section-header" style="font-size: 16px; margin-top: 30px; font-weight: 200;">Suggested edits</h3>
+                    <div class="suggested-edit">
+                        <div class="edit-text">
+                            return or destroy all Confidential Information within 
+                            <span class="edit-highlight">14 days</span>; provided, however, that re-
+                            ceiving party may retain one archival copy for complian-
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
