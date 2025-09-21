@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>ConfiDoc — NDA Flow (v8 Modes + Fast Export)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#ffffff; --text:#111; --muted:#6b7280; --edge:#efefef;
+  --panel:#ffffff; --shadow:0 1px 2px rgba(0,0,0,.05);
+  --accent:#111; --accent-contrast:#fff;
+  --hl:#0ea5a4;
+  --radius:14px;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text)}
+.app{display:grid;grid-template-columns:320px 1fr;gap:16px;min-height:100vh;padding:16px}
+.sidebar,.panel,.card{background:var(--panel);border:none;border-radius:var(--radius);box-shadow:var(--shadow)}
+.sidebar{padding:16px;display:flex;flex-direction:column;gap:12px}
+.panel{padding:16px}
+.logo{padding:10px;text-align:center;border-radius:12px;box-shadow:var(--shadow)}
+.logo .brand{display:inline-block;font-weight:700;padding:6px 12px;border-radius:12px;border:1px solid var(--edge)}
+label{font-size:13px;color:var(--muted)}
+input,select,textarea{width:100%;border:none;background:#f5f6f7;padding:10px 12px;border-radius:10px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+     padding:10px 16px;border-radius:999px;border:none;cursor:pointer;
+     background:var(--accent);color:var(--accent-contrast);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.btn.secondary{background:#e8e8e8;color:#111}
+.btn.ghost{background:#f3f4f6;color:#111}
+.btn.inline{padding:6px 10px}
+.toolbar{display:flex;align-items:center;gap:8px}
+.hl{color:var(--hl);font-weight:600}
+.small{font-size:12px;color:#6b7280}
+/* tri-panel */
+.tripanel{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.card{padding:16px;display:flex;flex-direction:column;gap:12px}
+.card-title{font-weight:700}
+.section{display:flex;flex-direction:column;gap:8px}
+.section-title{font-size:13px;font-weight:700;color:#374151;display:flex;align-items:center;gap:8px;cursor:pointer}
+.section-body{color:#6b7280}
+.chev{border:1px solid #9CA3AF;border-radius:4px;font-size:12px;padding:0 4px}
+.collapsed .section-body{display:none}
+/* issues list */
+.issue{padding:10px;border-radius:12px;background:#fafafa;border:1px dashed var(--edge);cursor:pointer}
+.issue .meta{font-size:12px;color:#6b7280}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;background:#f3f4f6;font-size:12px}
+.badge.sev-high{background:#fee2e2}
+.badge.sev-med{background:#fef3c7}
+.badge.sev-low{background:#e0f2fe}
+.issue.resolved{opacity:.55}
+/* fixes table */
+.fix{padding:10px;border-radius:12px;background:#fafafa;border:1px dashed var(--edge)}
+.fix .variant{font-weight:700}
+.fix pre{white-space:pre-wrap;background:#fff;border-radius:8px;padding:8px;margin:8px 0;border:1px solid #eee}
+/* export block */
+#export{margin-top:auto;padding:12px;border:1px dashed var(--edge);border-radius:12px;background:#fafafa}
+#export .note{font-size:12px;color:#667085}
+/* decision log drawer */
+#logBtn{position:fixed;right:16px;bottom:16px;z-index:50}
+#log{position:fixed;right:16px;bottom:64px;width:360px;max-height:55vh;overflow:auto;
+     background:#fff;border-radius:14px;box-shadow:0 10px 24px rgba(0,0,0,.12);padding:12px;display:none}
+#log.open{display:block}
+.log-item{font-size:12px;background:#fafafa;border-radius:10px;padding:8px;margin:6px 0}
+/* fast bar */
+.fastbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap; background:#f8fafb;border:1px solid #eef0f2;border-radius:12px;padding:10px}
+.progress{height:8px;background:#e5e7eb;border-radius:999px;overflow:hidden;flex:1}
+.progress > span{display:block;height:8px;background:#0ea5a4}
+kbd{font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:11px; background:#eee; border-radius:4px; padding:1px 4px; border:1px solid #ddd}
+@media (max-width:1100px){.tripanel{grid-template-columns:1fr}.app{grid-template-columns:1fr}}
+/* dark */
+body.dark{--bg:#0f1114;--panel:#14161b;--text:#e6e9ed;--muted:#aab2bb}
+body.dark input, body.dark select, body.dark textarea { background:#0f1318; color:#e6e9ed; border:1px solid #2a2f33 }
+body.dark .issue, body.dark .fix, body.dark #export, body.dark .fastbar { background:#10141a; border-color:#2a2f33 }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo"><span class="brand">ConfiDoc</span></div>
+    <div class="toolbar">
+      <label><input id="darkToggle" type="checkbox"/> Dark</label>
+    </div>
+
+    <!-- MODE SELECTOR -->
+    <div class="group">
+      <label>Review Mode (Depth)</label>
+      <select id="mode">
+        <option value="quick">Quick — minimal clicks to export</option>
+        <option value="guided" selected>Guided — click through issues</option>
+        <option value="deep">Deep — show rationales & tolerances</option>
+      </select>
+    </div>
+
+    <!-- INPUTS -->
+    <div class="group">
+      <label>Document Type</label>
+      <select id="docType">
+        <option>NDA</option>
+        <option>Credit Agreement</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="row">
+      <div style="flex:1">
+        <label>Governing Law</label>
+        <select id="law">
+          <option>New York</option><option>Delaware</option><option>Ontario</option><option>California</option><option>Other</option>
+        </select>
+      </div>
+      <div style="flex:1">
+        <label>Effective Date</label>
+        <input type="date" id="effDate"/>
+      </div>
+    </div>
+    <div class="row">
+      <div style="flex:1">
+        <label>Party A (Legal Name)</label>
+        <input id="pA" placeholder="e.g., ABC Lending LLC"/>
+      </div>
+      <div style="flex:1">
+        <label>Role</label>
+        <select id="pARole"><option>Lender</option><option>Agent</option><option>Borrower</option><option>Guarantor</option></select>
+      </div>
+    </div>
+    <div class="row">
+      <div style="flex:1">
+        <label>Party B (Legal Name)</label>
+        <input id="pB" placeholder="e.g., Borrower Corp."/>
+      </div>
+      <div style="flex:1">
+        <label>Role</label>
+        <select id="pBRole"><option>Borrower</option><option>Lender</option><option>Agent</option><option>Guarantor</option></select>
+      </div>
+    </div>
+    <div class="row">
+      <div style="flex:1">
+        <label>Edit Preference</label>
+        <select id="editPref"><option>Least Change</option><option>Moderate</option><option>Conservative</option></select>
+      </div>
+      <div style="flex:1">
+        <label>Export Format</label>
+        <select id="exportFmt"><option>Redline + Clean</option><option>Redline only</option><option>Clean only</option></select>
+      </div>
+    </div>
+    <div class="group">
+      <label>Upload NDA (DOCX or PDF)</label>
+      <input type="file" id="uploader" accept=".docx,.pdf"/>
+    </div>
+
+    <!-- FAST PATH in Quick/Guided -->
+    <div class="fastbar" id="fastbar">
+      <button class="btn inline" id="applyAllMinimal">Apply Minimal to all</button>
+      <button class="btn inline secondary" id="applyAllStandard">Standard to all</button>
+      <div class="progress" title="Resolved issues"><span id="prog" style="width:0%"></span></div>
+      <span class="small"><span id="count">0</span>/<span id="total">0</span></span>
+    </div>
+
+    <button class="btn" id="start">Start Analysis</button>
+  </aside>
+
+  <main class="main">
+    <section class="panel">
+      <div class="panel-title" style="font-weight:700;display:flex;justify-content:space-between;align-items:center;">
+        <span>NDA Review — Issues → Fixes → Export</span>
+        <span class="small">Shortcuts: <kbd>A</kbd> apply minimal • <kbd>E</kbd> export</span>
+      </div>
+
+      <div class="tripanel">
+        <!-- Panel A: Compliance Issues -->
+        <div class="card" id="issuesCard">
+          <div class="card-title">A. Compliance Issues</div>
+          <div class="section deep-only">
+            <div class="section-title"><span class="chev">▾</span>Benchmark rationale & tolerances</div>
+            <div class="section-body">Deep mode shows rule commentary, lender-friendly minimums, and governing-law notes.</div>
+          </div>
+          <div id="issuesList">
+            <!-- sample data -->
+            <div class="issue" data-id="ISS-001">
+              <div><span class="badge sev-high">High</span> <b>Use Restriction</b> (Rule NDA-UR-01)</div>
+              <div class="meta">Excerpt: “Recipient may use the Confidential Information for <span class="hl">any business purpose</span> …”</div>
+            </div>
+            <div class="issue" data-id="ISS-002">
+              <div><span class="badge sev-med">Medium</span> <b>Residuals Clause</b> (Rule NDA-RS-04)</div>
+              <div class="meta">Excerpt: “Recipient’s unaided memory carve-out shall survive …”</div>
+            </div>
+            <div class="issue" data-id="ISS-003">
+              <div><span class="badge sev-low">Low</span> <b>Return/Destroy Timing</b> (Rule NDA-RD-02)</div>
+              <div class="meta">Excerpt: “Recipient shall return materials within a <span class="hl">reasonable time</span> …”</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel B: Fix Options -->
+        <div class="card" id="fixesCard">
+          <div class="card-title">B. Fix Options</div>
+          <div class="section">
+            <div class="section-title"><span class="chev">▾</span>Variants</div>
+            <div class="section-body">Three graded variants per issue. “Minimal” is the smallest redline that reaches compliance.</div>
+          </div>
+          <div id="fixes">
+            <div class="fix" data-for="ISS-001">
+              <div class="variant">Minimal</div>
+              <pre>“… may use the Confidential Information <b>solely</b> for evaluating a potential transaction between the parties.”</pre>
+              <div class="row">
+                <button class="btn ghost apply" data-variant="minimal" data-for="ISS-001">Apply</button>
+                <button class="btn secondary preview" data-for="ISS-001">Preview</button>
+                <button class="btn ghost inline skip" data-for="ISS-001">Skip</button>
+              </div>
+            </div>
+            <div class="fix" data-for="ISS-001">
+              <div class="variant">Standard</div>
+              <pre>“… solely to <b>evaluate, negotiate and consummate</b> the Transaction.”</pre>
+              <div class="row">
+                <button class="btn ghost apply" data-variant="standard" data-for="ISS-001">Apply</button>
+                <button class="btn secondary preview" data-for="ISS-001">Preview</button>
+              </div>
+            </div>
+            <div class="fix" data-for="ISS-001">
+              <div class="variant">Conservative</div>
+              <pre>“… solely for the <b>Permitted Purpose</b> as defined herein.”</pre>
+              <div class="row">
+                <button class="btn ghost apply" data-variant="conservative" data-for="ISS-001">Apply</button>
+                <button class="btn secondary preview" data-for="ISS-001">Preview</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel C: Export -->
+        <div class="card" id="exportCard">
+          <div class="card-title">C. Export</div>
+          <div class="section">
+            <div class="section-title"><span class="chev">▾</span>What gets exported</div>
+            <div class="section-body">Choose Redline (.docx with tracked changes) and/or Clean (.docx post-accept). An Issue Log (.xlsx) is included.</div>
+          </div>
+          <div id="export">
+            <div class="row">
+              <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="expRed" checked> Redline</label>
+              <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="expClean" checked> Clean</label>
+              <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="expLog"> Issue Log</label>
+            </div>
+            <div class="row" style="margin-top:6px">
+              <button class="btn" id="oneClickExport">One‑Click Export</button>
+              <button class="btn secondary" id="stageForExport">Stage fixes only</button>
+            </div>
+            <div class="note">Tip: Press <kbd>E</kbd> to export when all High/Medium issues are resolved.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<button id="logBtn" class="btn secondary">Decision Log</button>
+<div id="log">
+  <h4 style="margin:6px 0">Decision Log</h4>
+  <div class="log-item">Session initialized. Mode: Guided (default). Edit preference: Least Change.</div>
+</div>
+
+<script>
+// collapsible
+document.querySelectorAll('.section-title').forEach(t=>{
+  t.addEventListener('click',()=>{
+    const s = t.parentElement; s.classList.toggle('collapsed');
+    t.querySelector('.chev').textContent = s.classList.contains('collapsed') ? '▸' : '▾';
+  });
+});
+// dark toggle
+document.getElementById('darkToggle').addEventListener('change', (e)=>{
+  document.body.classList.toggle('dark', e.target.checked);
+});
+
+// modes
+const modeSel = document.getElementById('mode');
+const deepBits = document.querySelectorAll('.deep-only');
+function setMode(v){
+  const quick = v==='quick', deep = v==='deep';
+  document.querySelector('.fastbar').style.display = quick || v==='guided' ? 'flex' : 'none';
+  deepBits.forEach(el=> el.style.display = deep ? 'block' : 'none');
+  // In quick mode, collapse Issues and Fixes explanations
+  document.querySelectorAll('.section').forEach(s=>{
+    if (s.querySelector('.section-title')) {
+      if (quick) { s.classList.add('collapsed'); s.querySelector('.section-title .chev').textContent='▸'; }
+      else { s.classList.remove('collapsed'); s.querySelector('.section-title .chev').textContent='▾'; }
+    }
+  });
+  log("Mode set: "+v);
+}
+modeSel.addEventListener('change', e=> setMode(e.target.value));
+setMode('guided');
+
+// issues bookkeeping
+const issues = Array.from(document.querySelectorAll('.issue'));
+const total = issues.length;
+document.getElementById('total').textContent = total;
+let resolved = 0;
+
+function updateProgress(){
+  const prog = Math.round((resolved/total)*100);
+  document.getElementById('count').textContent = resolved;
+  document.getElementById('prog').style.width = prog + '%';
+  const oneClick = document.getElementById('oneClickExport');
+  oneClick.disabled = !(resolved >= total || resolved >= issues.filter(i=>!i.querySelector('.badge.sev-low')).length);
+}
+updateProgress();
+
+function resolveIssue(id, how){
+  const card = document.querySelector('.issue[data-id="'+id+'"]');
+  if (card && !card.classList.contains('resolved')){
+    card.classList.add('resolved');
+    resolved += 1;
+    log("Resolved "+id+" via "+how);
+    updateProgress();
+  }
+}
+
+// apply buttons
+document.querySelectorAll('.apply').forEach(btn=>{
+  btn.addEventListener('click', ()=> resolveIssue(btn.dataset.for, btn.dataset.variant || 'apply'));
+});
+document.querySelectorAll('.skip').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    log("Skipped "+btn.dataset.for+" (user accepted risk)");
+    resolveIssue(btn.dataset.for, 'skip');
+  });
+});
+
+// batch apply
+document.getElementById('applyAllMinimal').addEventListener('click', ()=>{
+  document.querySelectorAll('.apply[data-variant="minimal"]').forEach(b=> b.click());
+});
+document.getElementById('applyAllStandard').addEventListener('click', ()=>{
+  document.querySelectorAll('.apply[data-variant="standard"]').forEach(b=> b.click());
+});
+
+// keyboard shortcuts
+document.addEventListener('keydown', (e)=>{
+  if (e.key==='a' || e.key==='A'){ document.getElementById('applyAllMinimal').click(); }
+  if (e.key==='e' || e.key==='E'){ document.getElementById('oneClickExport').click(); }
+});
+
+// export buttons
+function chosenExports(){
+  return {
+    red: document.getElementById('expRed').checked,
+    clean: document.getElementById('expClean').checked,
+    logx: document.getElementById('expLog').checked
+  };
+}
+document.getElementById('oneClickExport').addEventListener('click', ()=>{
+  const choice = chosenExports();
+  log("Export requested: "
+      + (choice.red?'Redline ':'')
+      + (choice.clean?'Clean ':'')
+      + (choice.logx?'Log ':''));
+  alert("Simulated export: preparing " + JSON.stringify(choice));
+});
+document.getElementById('stageForExport').addEventListener('click', ()=>{
+  log("Staged fixes; ready to export later.");
+  alert("Fixes staged. Proceed to One‑Click Export when ready.");
+});
+
+// decision log
+const logBtn = document.getElementById('logBtn');
+const logPanel = document.getElementById('log');
+function log(msg){
+  const el = document.createElement('div');
+  el.className = 'log-item'; el.textContent = msg; logPanel.appendChild(el);
+}
+logBtn.addEventListener('click', ()=> logPanel.classList.toggle('open'));
+</script>
+</body>
+</html>
