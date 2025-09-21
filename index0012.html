@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>ConfiDoc — NDA Workflow (v12 Single-Page)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#ffffff;--text:#111;--muted:#6b7280;--edge:#eef0f2;--panel:#ffffff;--shadow:0 1px 2px rgba(0,0,0,.05);
+--accent:#111;--accent-contrast:#fff;--hl:#0ea5a4;--hl-bg:#e6fffb;--radius:14px}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text)}
+.app{display:grid;grid-template-columns:280px 1fr;gap:16px;min-height:100vh;padding:16px}
+.sidebar,.panel,.card{background:var(--panel);border:none;border-radius:var(--radius);box-shadow:var(--shadow)}
+.sidebar{padding:16px;display:flex;flex-direction:column;gap:12px}
+.panel{padding:16px}
+.logo{padding:10px;text-align:center;border-radius:12px;box-shadow:var(--shadow)}
+.logo .brand{display:inline-block;font-weight:700;padding:6px 12px;border-radius:12px;border:1px solid var(--edge)}
+.small{font-size:12px;color:#6b7280}
+hr{border:none;border-top:1px solid var(--edge);margin:10px 0}
+.steps{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.step{padding:6px 10px;border-radius:999px;border:1px solid var(--edge);background:#f7f8fa;font-size:12px;cursor:pointer}
+.step.active{background:#111;color:#fff;border-color:#111}
+/* Checklist */
+.checklist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.checkitem{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:#fafafa;border:1px solid var(--edge)}
+.checkitem.pass{border-left:4px solid #22c55e}
+.checkitem.fail{border-left:4px solid #ef4444}
+.checkitem .label{flex:1}
+/* Review */
+.tripanel{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:14px}
+.card{padding:16px;display:flex;flex-direction:column;gap:12px}
+.card-title{font-weight:700}
+.viewer{position:relative;border:1px solid var(--edge);border-radius:12px;background:#fcfcfd;padding:18px;line-height:1.6;max-height:60vh;overflow:auto}
+mark.hl{background:var(--hl-bg);padding:2px 4px;border-radius:6px;outline:1px dashed #b3ece7}
+mark.hl.selected{box-shadow:0 0 0 2px var(--hl) inset}
+.fastbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#f8fafb;border:1px solid #eef0f2;border-radius:12px;padding:10px}
+.progress{height:8px;background:#e5e7eb;border-radius:999px;overflow:hidden;flex:1}
+.progress>span{display:block;height:8px;background:#0ea5a4}
+@media(max-width:1100px){.tripanel{grid-template-columns:1fr}.app{grid-template-columns:1fr}}
+/* Final */
+.tabs{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.tab{padding:6px 10px;border-radius:999px;border:1px solid var(--edge);background:#f7f8fa;font-size:12px;cursor:pointer}
+.tab.active{background:#111;color:#fff;border-color:#111}
+.preview{border:1px solid var(--edge);border-radius:12px;padding:16px;background:#fcfcfd;max-height:60vh;overflow:auto}
+.diff ins{background:#e6ffed;text-decoration:none}
+.diff del{background:#ffeef0}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo"><span class="brand">ConfiDoc</span></div>
+    <div class="steps">
+      <div class="step active" data-step="1">1 Intake</div>
+      <div class="step" data-step="2">2 Review</div>
+      <div class="step" data-step="3">3 Final</div>
+    </div>
+    <div class="small">Mode: <b>Guided</b></div>
+    <hr/>
+    <div class="small">Export produces Redline (.docx), Clean (.docx), and Decision Log.</div>
+    <button class="btn" id="exportBtn" disabled>Export</button>
+  </aside>
+
+  <main class="main">
+    <!-- Step 1 -->
+    <section class="panel step-panel" id="step1">
+      <div class="card-title">Step 1 — Intake & Checklist</div>
+      <p class="small">We scanned the NDA for essential elements. Review before proceeding.</p>
+      <ul class="checklist" id="checklist">
+        <li class="checkitem pass" data-key="parties"><span class="label">Parties Identified</span> ✔</li>
+        <li class="checkitem pass" data-key="law"><span class="label">Governing Law Present</span> ✔</li>
+        <li class="checkitem fail" data-key="confdef"><span class="label">Confidentiality Definition</span> ✖</li>
+        <li class="checkitem pass" data-key="term"><span class="label">Term Specified</span> ✔</li>
+        <li class="checkitem fail" data-key="return"><span class="label">Return/Destruction Clause</span> ✖</li>
+      </ul>
+      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" id="proceedToReview">Proceed to Review</button>
+        <button class="btn secondary" id="autoFix">Auto-Fix Missing</button>
+      </div>
+    </section>
+
+    <!-- Step 2 -->
+    <section class="panel step-panel" id="step2" style="display:none">
+      <div class="card-title">Step 2 — Issues & Document Viewer</div>
+      <div class="fastbar">
+        <button class="btn inline" id="applyAllMinimal">Apply Minimal to All</button>
+        <div class="progress"><span id="prog" style="width:0%"></span></div>
+        <span class="small"><span id="count">0</span>/<span id="total">3</span></span>
+      </div>
+      <div class="tripanel">
+        <div class="card">
+          <div class="card-title">Issues</div>
+          <div class="issue" data-id="ISS-001">High — Use Restriction (NDA-UR-01)</div>
+          <div class="issue" data-id="ISS-002">Medium — Residuals Clause (NDA-RS-04)</div>
+          <div class="issue" data-id="ISS-003">Low — Return/Destroy Timing (NDA-RD-02)</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Document Viewer</div>
+          <div class="viewer" id="viewer">
+            <p><b>Use of Information.</b> The Recipient may use the Confidential Information for <mark class="hl" data-issue="ISS-001">any business purpose</mark>.</p>
+            <p><b>Residuals.</b> Recipient may use information retained in unaided memory, which shall <mark class="hl" data-issue="ISS-002">survive termination</mark>.</p>
+            <p><b>Return/Destroy.</b> Upon request, Recipient shall return materials within a <mark class="hl" data-issue="ISS-003">reasonable time</mark>.</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Controls</div>
+          <div id="controlTarget">Select a highlight to choose revision level.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 3 -->
+    <section class="panel step-panel" id="step3" style="display:none">
+      <div class="card-title">Step 3 — Final Review & Export</div>
+      <div class="tabs">
+        <div class="tab active" data-tab="orig">Original</div>
+        <div class="tab" data-tab="rev">Revised</div>
+        <div class="tab" data-tab="diff">Redline</div>
+      </div>
+      <div class="preview" id="orig">
+        <h3>Mutual NDA — Original (Excerpt)</h3>
+        <div id="origBody">
+          <p><b>Use of Information.</b> The Recipient may use the Confidential Information for <i>any business purpose</i>.</p>
+          <p><b>Residuals.</b> Recipient may use information retained in unaided memory, which shall <i>survive termination</i>.</p>
+          <p><b>Return/Destroy.</b> Upon request, Recipient shall return materials within a <i>reasonable time</i>.</p>
+        </div>
+      </div>
+      <div class="preview" id="rev" style="display:none">
+        <h3>Mutual NDA — Revised (Excerpt)</h3>
+        <div id="revBody"></div>
+      </div>
+      <div class="preview diff" id="diff" style="display:none">
+        <h3>Mutual NDA — Redline (Simulated)</h3>
+        <div id="diffBody"></div>
+      </div>
+      <div class="fastbar" style="margin-top:8px">
+        <div class="small" id="finalStatus">Pending items remain (resolve High/Medium and pass checklist).</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn inline" id="dlRedline" disabled>Download Redline</button>
+          <button class="btn inline secondary" id="dlClean" disabled>Download Clean</button>
+          <button class="btn inline secondary" id="dlLog" disabled>Decision Log</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<script>
+const STATE={checklist:{parties:true,law:true,confdef:false,term:true,return:false},
+             issues:{"ISS-001":null,"ISS-002":null,"ISS-003":null}};
+const stepPanels={1:document.getElementById('step1'),2:document.getElementById('step2'),3:document.getElementById('step3')};
+function gotoStep(n){document.querySelectorAll('.step').forEach(s=>s.classList.toggle('active',s.dataset.step==n));
+  Object.entries(stepPanels).forEach(([k,el])=>el.style.display=(k==n?'block':'none'));
+  if(n==3){refreshFinalFromState();updateExportButtons();}}
+document.querySelectorAll('.step').forEach(s=>s.addEventListener('click',()=>gotoStep(s.dataset.step)));
+document.getElementById('proceedToReview').addEventListener('click',()=>gotoStep(2));
+document.getElementById('autoFix').addEventListener('click',()=>{
+  STATE.checklist.confdef=true;STATE.checklist.return=true;
+  document.querySelectorAll('#checklist .checkitem').forEach(li=>{if(STATE.checklist[li.dataset.key]){li.classList.remove('fail');li.classList.add('pass')}});
+});
+const VARIANTS={"ISS-001":{minimal:"solely for evaluating a potential transaction between the parties",
+                           standard:"solely to evaluate, negotiate and consummate the Transaction",
+                           conservative:"solely for the Permitted Purpose as defined herein"},
+                "ISS-002":{minimal:"shall not rely on unaided memory to use Confidential Information",
+                           standard:"no residuals; unaided memory does not grant usage rights",
+                           conservative:"no residuals; any recollection is deemed Confidential Information"},
+                "ISS-003":{minimal:"within ten (10) days of request",
+                           standard:"within five (5) business days of request",
+                           conservative:"immediately upon request and in no event later than three (3) business days"}};
+const totalIssues=Object.keys(STATE.issues).length;
+document.getElementById('total').textContent=totalIssues;
+function isReady(){const highMed=STATE.issues["ISS-001"]&&STATE.issues["ISS-002"];const checklist=Object.values(STATE.checklist).every(Boolean);return !!highMed&&checklist;}
+function updateProgress(){const resolved=Object.values(STATE.issues).filter(Boolean).length;
+  document.getElementById('count').textContent=resolved;document.getElementById('prog').style.width=(resolved/totalIssues*100)+'%';updateExportButtons();}
+function updateExportButtons(){const ready=isReady();document.getElementById('dlRedline').disabled=!ready;document.getElementById('dlClean').disabled=!ready;document.getElementById('dlLog').disabled=!ready;document.getElementById('exportBtn').disabled=!ready;document.getElementById('finalStatus').textContent=ready?"All High/Medium issues resolved. Requirements checklist passed.":"Pending items remain (resolve High/Medium and pass checklist).";}
+document.getElementById('viewer').addEventListener('click',(e)=>{const m=e.target.closest('mark.hl');if(!m)return;
+  document.querySelectorAll('mark.hl').forEach(x=>x.classList.remove('selected'));m.classList.add('selected');
+  const id=m.dataset.issue;const tgt=document.getElementById('controlTarget');tgt.innerHTML=`
+    <div class="small">Choose adjustment for ${id}:</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn secondary inline" data-choose="minimal">Minimal</button>
+      <button class="btn secondary inline" data-choose="standard">Standard</button>
+      <button class="btn secondary inline" data-choose="conservative">Conservative</button>
+      <button class="btn inline" data-choose="accept">Accept As-Is</button>
+    </div>`;
+  tgt.querySelectorAll('[data-choose]').forEach(btn=>btn.addEventListener('click',()=>{
+    const c=btn.dataset.choose;if(c==='accept'){STATE.issues[id]='accept';} else {STATE.issues[id]=c;m.textContent=VARIANTS[id][c];m.style.background='#d1fae5';} updateProgress();
+  }));
+});
+document.getElementById('applyAllMinimal').addEventListener('click',()=>{
+  document.querySelectorAll('mark.hl').forEach(m=>{const id=m.dataset.issue;m.textContent=VARIANTS[id].minimal;STATE.issues[id]='minimal';m.style.background='#d1fae5';});
+  updateProgress();
+});
+const tabs=document.querySelectorAll('.tab');const views={orig:document.getElementById('orig'),rev:document.getElementById('rev'),diff:document.getElementById('diff')};
+tabs.forEach(t=>t.addEventListener('click',()=>{tabs.forEach(x=>x.classList.remove('active'));t.classList.add('active');Object.values(views).forEach(v=>v.style.display='none');views[t.dataset.tab].style.display='block';}));
+function refreshFinalFromState(){const rev={"ISS-001":STATE.issues["ISS-001"]?VARIANTS["ISS-001"][STATE.issues["ISS-001"]]||"any business purpose":"any business purpose",
+                                           "ISS-002":STATE.issues["ISS-002"]?VARIANTS["ISS-002"][STATE.issues["ISS-002"]]||"survive termination":"survive termination",
+                                           "ISS-003":STATE.issues["ISS-003"]?VARIANTS["ISS-003"][STATE.issues["ISS-003"]]||"reasonable time":"reasonable time"};
+  document.getElementById('revBody').innerHTML=`
+    <p><b>Use of Information.</b> The Recipient may use the Confidential Information <u>${rev["ISS-001"]}</u>.</p>
+    <p><b>Residuals.</b> Recipient <u>${rev["ISS-002"]}</u>.</p>
+    <p><b>Return/Destroy.</b> Upon request, Recipient shall return materials <u>${rev["ISS-003"]}</u>.</p>`;
+  document.getElementById('diffBody').innerHTML=`
+    <p><b>Use of Information.</b> The Recipient may use the Confidential Information for <del>any business purpose</del><ins>${rev["ISS-001"]}</ins>.</p>
+    <p><b>Residuals.</b> Recipient may use information retained in unaided memory, which shall <del>survive termination</del><ins>${rev["ISS-002"]}</ins>.</p>
+    <p><b>Return/Destroy.</b> Upon request, Recipient shall return materials within a <del>reasonable time</del><ins>${rev["ISS-003"]}</ins>.</p>`;}
+document.getElementById('exportBtn').addEventListener('click',()=>gotoStep(3));
+document.getElementById('dlRedline').addEventListener('click',()=>alert('Generating Redline (.docx)…'));
+document.getElementById('dlClean').addEventListener('click',()=>alert('Generating Clean (.docx)…'));
+document.getElementById('dlLog').addEventListener('click',()=>alert('Exporting Decision Log (.xlsx)…'));
+</script>
+</body>
+</html>
