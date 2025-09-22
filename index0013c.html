@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>ConfiDoc — v13c (Full Doc Default, Word-centric)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#ffffff;--text:#111;--muted:#6b7280;--edge:#e5e7eb;--panel:#fff;--hl:#0ea5a4;--hlbg:#e6fffb;--radius:14px}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text)}
+.app{display:grid;grid-template-columns:280px 1fr;gap:14px;min-height:100vh;padding:14px}
+.sidebar,.panel,.card{background:var(--panel);border:1px solid var(--edge);border-radius:var(--radius)}
+.sidebar{padding:14px;display:flex;flex-direction:column;gap:10px}
+.panel{padding:14px}
+.card{padding:14px;display:flex;flex-direction:column;gap:10px}
+.step{padding:6px 10px;border-radius:999px;border:1px solid var(--edge);background:#f8fafc;font-size:12px;cursor:pointer;display:inline-block;margin-right:6px}
+.step.active{background:#111;color:#fff;border-color:#111}
+.small{font-size:12px;color:var(--muted)}
+hr{border:none;border-top:1px solid var(--edge);margin:8px 0}
+.btn{padding:8px 12px;border-radius:10px;border:1px solid #111;background:#111;color:#fff;cursor:pointer}
+.btn.secondary{background:#f3f4f6;color:#111;border-color:var(--edge)}
+.btn.ghost{background:transparent;color:#111;border-color:var(--edge)}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;background:#f3f4f6;font-size:12px}
+.badge.high{background:#fee2e2}
+.badge.med{background:#fef3c7}
+.badge.low{background:#e0f2fe}
+.progress{height:8px;background:#e5e7eb;border-radius:999px;overflow:hidden}
+.progress>span{display:block;height:8px;background:#0ea5a4;width:0%}
+.viewer{position:relative;border:1px solid var(--edge);border-radius:12px;background:#fcfcfd;padding:18px;line-height:1.6;max-height:64vh;overflow:auto}
+.viewer p{margin:12px 0}
+mark.hl{background:var(--hlbg);padding:2px 4px;border-radius:6px;outline:1px dashed #b3ece7}
+mark.hl.selected{box-shadow:0 0 0 2px var(--hl) inset}
+.tripanel{display:grid;grid-template-columns:1fr 1.6fr 1fr;gap:12px}
+.tabs .tab{display:inline-block;padding:6px 10px;border:1px solid var(--edge);border-radius:999px;margin-right:6px;cursor:pointer}
+.tabs .active{background:#111;color:#fff;border-color:#111}
+.preview{border:1px solid var(--edge);border-radius:12px;padding:14px;background:#fcfcfd;max-height:64vh;overflow:auto}
+.diff ins{background:#e6ffed;text-decoration:none}
+.diff del{background:#ffeef0}
+.note{padding:8px;border-radius:8px;background:#f1f5f9;border:1px solid #e2e8f0}
+@media(max-width:1100px){.tripanel{grid-template-columns:1fr}.app{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div>
+      <span class="step active" data-step="1">1 Intake</span>
+      <span class="step" data-step="2">2 Review</span>
+      <span class="step" data-step="3">3 Final</span>
+    </div>
+    <div class="small">v13c — Full document is the default reviewer. Excerpts list drives navigation.</div>
+    <hr/>
+    <div class="small">Primary workflow: <b>Word/DOCX</b>. PDFs are allowed but typically converted before edits.</div>
+    <button class="btn" id="exportBtn" disabled>Export</button>
+  </aside>
+
+  <main class="panel">
+    <!-- Step 1: Intake -->
+    <section class="step-panel" id="step1">
+      <h3>Step 1 — Intake & Checklist</h3>
+      <div class="note small">Upload your <b>Word (.docx)</b> NDA (PDFs allowed). Minimal checks run instantly.</div>
+      <ul class="checklist" style="list-style:none;padding:0;margin:10px 0;display:flex;flex-direction:column;gap:8px">
+        <li class="checkitem pass" data-key="parties" style="border-left:4px solid #16a34a;padding:8px;background:#fafafa;border:1px solid #e5e7eb;border-radius:10px">Parties Identified</li>
+        <li class="checkitem pass" data-key="law" style="border-left:4px solid #16a34a;padding:8px;background:#fafafa;border:1px solid #e5e7eb;border-radius:10px">Governing Law Present</li>
+        <li class="checkitem fail" data-key="confdef" style="border-left:4px solid #ef4444;padding:8px;background:#fafafa;border:1px solid #e5e7eb;border-radius:10px">Confidentiality Definition</li>
+        <li class="checkitem pass" data-key="term" style="border-left:4px solid #16a34a;padding:8px;background:#fafafa;border:1px solid #e5e7eb;border-radius:10px">Term Specified</li>
+        <li class="checkitem fail" data-key="return" style="border-left:4px solid #ef4444;padding:8px;background:#fafafa;border:1px solid #e5e7eb;border-radius:10px">Return/Destruction Clause</li>
+      </ul>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" id="proceedToReview">Proceed to Review</button>
+        <button class="btn secondary" id="autoFix">Auto‑Fix Missing</button>
+        <button class="btn ghost" id="toggleMode">Toggle: Excerpt View Only</button>
+      </div>
+    </section>
+
+    <!-- Step 2: Review (Full Doc default) -->
+    <section class="step-panel" id="step2" style="display:none">
+      <h3>Step 2 — Issues & Full Document Viewer</h3>
+      <div class="tripanel">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <h4 style="margin:0">Issues</h4>
+            <span class="small"><span id="count">0</span>/3 resolved</span>
+          </div>
+          <div class="progress"><span id="prog"></span></div>
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+            <button class="btn secondary" id="applyAllMinimal">Apply Minimal to All</button>
+            <select id="filter" class="small">
+              <option value="all">All severities</option>
+              <option value="high">High</option>
+              <option value="med">Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+          <div id="issuesList" class="small" style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+            <div class="issue" data-id="ISS-001" data-sev="high" style="cursor:pointer">
+              <span class="badge high" title="High: Use exceeds tolerance. Rule: NDA‑UR‑01">High</span> Use of Information — “any business purpose”
+              <div class="small" style="color:#64748b">Page 2 • NDA‑UR‑01</div>
+            </div>
+            <div class="issue" data-id="ISS-002" data-sev="med" style="cursor:pointer">
+              <span class="badge med" title="Medium: Residuals carve‑out not allowed. Rule: NDA‑RS‑04">Med</span> Residuals — “survive termination”
+              <div class="small" style="color:#64748b">Page 3 • NDA‑RS‑04</div>
+            </div>
+            <div class="issue" data-id="ISS-003" data-sev="low" style="cursor:pointer">
+              <span class="badge low" title="Low: Timing vague; tighten. Rule: NDA‑RD‑02">Low</span> Return/Destroy — “reasonable time”
+              <div class="small" style="color:#64748b">Page 4 • NDA‑RD‑02</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <h4 style="margin:0">Full Document</h4>
+            <button class="btn secondary" id="toggleExcerpt">Switch to Excerpts</button>
+          </div>
+          <div class="viewer" id="viewer">
+            <p id="p1"><b>1. Purpose.</b> The parties intend to explore a potential transaction and will exchange Confidential Information (“CI”).</p>
+            <p id="p2"><b>2. Use of Information.</b> The Recipient may use CI for <mark class="hl" id="mark-ISS-001" data-issue="ISS-001">any business purpose</mark>. The Recipient shall not disclose CI except as permitted herein.</p>
+            <p id="p3"><b>3. Confidentiality.</b> “Confidential Information” means any non‑public information disclosed by either party...</p>
+            <p id="p4"><b>4. Residuals.</b> Recipient may use information retained in unaided memory, which shall <mark class="hl" id="mark-ISS-002" data-issue="ISS-002">survive termination</mark>.</p>
+            <p id="p5"><b>5. Return/Destroy.</b> Upon request, Recipient shall return materials within a <mark class="hl" id="mark-ISS-003" data-issue="ISS-003">reasonable time</mark>.</p>
+            <p id="p6"><b>6. Term.</b> This Agreement shall remain in effect for three (3) years from the Effective Date.</p>
+          </div>
+        </div>
+        <div class="card">
+          <h4 style="margin:0">Controls</h4>
+          <div id="controlTarget" class="small">Click an issue or highlight to choose a revision level.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 2: Review (Excerpt Only mode) -->
+    <section class="step-panel" id="step2x" style="display:none">
+      <h3>Step 2 — Excerpts Only (Banker Mode)</h3>
+      <div class="tripanel">
+        <div class="card">
+          <h4 style="margin:0">Issues</h4>
+          <div class="small">Filtered list identical to full mode.</div>
+          <div class="progress"><span id="progX"></span></div>
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+            <button class="btn secondary" id="applyAllMinimalX">Apply Minimal to All</button>
+          </div>
+          <div id="issuesListX" class="small" style="display:flex;flex-direction:column;gap:8px;margin-top:8px"></div>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <h4 style="margin:0">Excerpts</h4>
+            <button class="btn secondary" id="toggleFull">Switch to Full Document</button>
+          </div>
+          <div class="viewer" id="viewerX">
+            <!-- Cards inserted dynamically -->
+          </div>
+        </div>
+        <div class="card">
+          <h4 style="margin:0">Controls</h4>
+          <div id="controlTargetX" class="small">Select an excerpt to choose a revision level.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 3: Final -->
+    <section class="step-panel" id="step3" style="display:none">
+      <h3>Step 3 — Final Review & Export</h3>
+      <label style="display:flex;gap:6px;align-items:center;margin:8px 0">
+        <input type="checkbox" id="finalSign"/> <span class="small">I confirm this document meets lender guidelines.</span>
+      </label>
+      <div class="tabs" style="margin-bottom:6px">
+        <span class="tab active" data-tab="orig">Original</span>
+        <span class="tab" data-tab="rev">Revised</span>
+        <span class="tab" data-tab="diff">Redline</span>
+      </div>
+      <div class="preview" id="orig">
+        <h4>Original (Excerpt)</h4>
+        <div id="origBody">
+          <p><b>Use of Information.</b> The Recipient may use CI for <i>any business purpose</i>.</p>
+          <p><b>Residuals.</b> Recipient may use information retained in unaided memory, which shall <i>survive termination</i>.</p>
+          <p><b>Return/Destroy.</b> Upon request, Recipient shall return materials within a <i>reasonable time</i>.</p>
+        </div>
+      </div>
+      <div class="preview" id="rev" style="display:none">
+        <h4>Revised (Built from your decisions)</h4>
+        <div id="revBody"></div>
+      </div>
+      <div class="preview diff" id="diff" style="display:none">
+        <h4>Redline (Simulated)</h4>
+        <div id="diffBody"></div>
+      </div>
+      <div class="note small" id="finalStatus" style="margin-top:8px">Pending: resolve High/Med, pass checklist, and confirm sign‑off.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+        <button class="btn" id="dlRedline" disabled>Download Redline</button>
+        <button class="btn secondary" id="dlClean" disabled>Download Clean</button>
+        <button class="btn secondary" id="dlLog" disabled>Decision Log</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+// ----- Shared state and helpers
+const STATE={checklist:{parties:true,law:true,confdef:false,term:true,return:false},
+             issues:{"ISS-001":null,"ISS-002":null,"ISS-003":null},
+             mode:'full'}; // 'full' or 'excerpt'
+
+const steps={1:document.getElementById('step1'),2:document.getElementById('step2'),3:document.getElementById('step3'), '2x':document.getElementById('step2x')};
+
+function gotoStep(n){
+  document.querySelectorAll('.step').forEach(s=>s.classList.toggle('active',s.dataset.step==n));
+  Object.values(steps).forEach(el=>el.style.display='none');
+  if(n==2 && STATE.mode==='full'){steps[2].style.display='block'}
+  else if(n==2 && STATE.mode==='excerpt'){steps['2x'].style.display='block'}
+  else{steps[n].style.display='block'}
+  if(n==3){refreshFinal();updateExportButtons();}
+}
+
+document.querySelectorAll('.step').forEach(s=>s.addEventListener('click',()=>gotoStep(+s.dataset.step)));
+document.getElementById('proceedToReview').addEventListener('click',()=>gotoStep(2));
+document.getElementById('autoFix').addEventListener('click',()=>{
+  STATE.checklist.confdef=true;STATE.checklist.return=true;
+  document.querySelectorAll('.checkitem').forEach(li=>{
+    const k=li.dataset.key;if(STATE.checklist[k]){li.style.borderLeftColor='#16a34a';}
+  });
+});
+
+// Toggle modes
+document.getElementById('toggleMode').addEventListener('click',()=>{
+  STATE.mode = (STATE.mode==='full'?'excerpt':'full');
+  gotoStep(2);
+});
+document.getElementById('toggleExcerpt').addEventListener('click',()=>{STATE.mode='excerpt';gotoStep(2)});
+document.getElementById('toggleFull').addEventListener('click',()=>{STATE.mode='full';gotoStep(2)});
+
+// Variants
+const VARS={"ISS-001":{minimal:"solely for evaluating a potential transaction between the parties",benchmark:"solely to evaluate, negotiate and consummate the Transaction",conservative:"solely for the Permitted Purpose as defined herein"},
+            "ISS-002":{minimal:"shall not rely on unaided memory to use Confidential Information",benchmark:"no residuals; unaided memory does not grant usage rights",conservative:"no residuals; any recollection is deemed Confidential Information"},
+            "ISS-003":{minimal:"within ten (10) days of request",benchmark:"within five (5) business days of request",conservative:"immediately upon request and in no event later than three (3) business days"}};
+
+const totalIssues=Object.keys(STATE.issues).length;
+function updateProgress(){
+  const resolved=Object.values(STATE.issues).filter(Boolean).length;
+  (document.getElementById('count')||{}).textContent=resolved;
+  (document.getElementById('prog')||{}).style&&(document.getElementById('prog').style.width=(resolved/totalIssues*100)+'%');
+  (document.getElementById('progX')||{}).style&&(document.getElementById('progX').style.width=(resolved/totalIssues*100)+'%');
+  updateExportButtons();
+}
+function isReady(){
+  const highMed = STATE.issues["ISS-001"] && STATE.issues["ISS-002"];
+  const checklist = Object.values(STATE.checklist).every(Boolean);
+  const sign = document.getElementById('finalSign').checked;
+  return !!highMed && checklist && sign;
+}
+function updateExportButtons(){
+  const ready=isReady();
+  ["dlRedline","dlClean","dlLog","exportBtn"].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=!ready});
+  const fs=document.getElementById('finalStatus'); if(fs) fs.textContent = ready ? "Ready: all checks passed and sign‑off confirmed." : "Pending: resolve High/Med, pass checklist, and confirm sign‑off.";
+}
+
+// Issues list click → scroll to highlight
+document.querySelectorAll('#issuesList .issue').forEach(div=>div.addEventListener('click',()=>{
+  const id = div.dataset.id;
+  const mark = document.getElementById('mark-'+id);
+  if(mark){ mark.scrollIntoView({behavior:'smooth', block:'center'}); selectMark(mark); }
+  gotoStep(2);
+}));
+
+// Full viewer click → select highlight
+document.getElementById('viewer').addEventListener('click',e=>{
+  const m=e.target.closest('mark.hl'); if(!m) return; selectMark(m);
+});
+
+function selectMark(m){
+  document.querySelectorAll('mark.hl').forEach(x=>x.classList.remove('selected'));
+  m.classList.add('selected');
+  const id=m.dataset.issue;
+  const tgt=document.getElementById('controlTarget');
+  tgt.innerHTML=`
+    <div class="small" style="margin-bottom:6px">Choose adjustment for <b>${id}</b>:</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+      <button class="btn secondary" data-c="minimal">Minimal</button>
+      <button class="btn secondary" data-c="benchmark">Benchmark</button>
+      <button class="btn secondary" data-c="conservative">Conservative</button>
+      <button class="btn" data-c="accept">Accept As‑Is</button>
+    </div>
+    <textarea id="customText" class="small" placeholder="Custom edit (optional)" style="width:100%;height:70px;border:1px solid #e5e7eb;border-radius:8px;padding:8px"></textarea>
+    <div style="display:flex;gap:6px;margin-top:6px">
+      <button class="btn" id="applyCustom">Apply Custom</button>
+      <button class="btn secondary" id="undo">Undo</button>
+    </div>
+    <div class="small" style="margin-top:6px;color:#64748b">Rule: <b>${id==="ISS-001"?"NDA‑UR‑01":id==="ISS-002"?"NDA‑RS‑04":"NDA‑RD‑02"}</b></div>`;
+  tgt.querySelectorAll('[data-c]').forEach(b=>b.addEventListener('click',()=>{
+    const c=b.dataset.c;
+    if(c==='accept'){ STATE.issues[id]='accept'; }
+    else { STATE.issues[id]=c; m.textContent = VARS[id][c]; m.style.background='#d1fae5'; }
+    updateProgress();
+  }));
+  tgt.querySelector('#applyCustom').addEventListener('click',()=>{
+    const val = tgt.querySelector('#customText').value.trim();
+    if(val){ STATE.issues[id]='custom'; m.textContent=val; m.style.background='#d1fae5'; updateProgress();}
+  });
+  tgt.querySelector('#undo').addEventListener('click',()=>{
+    STATE.issues[id]=null;
+    // reset text for demo
+    if(id==='ISS-001') m.textContent='any business purpose';
+    if(id==='ISS-002') m.textContent='survive termination';
+    if(id==='ISS-003') m.textContent='reasonable time';
+    m.style.background='var(--hlbg)';
+    updateProgress();
+  });
+}
+
+// Apply minimal to all
+document.getElementById('applyAllMinimal').addEventListener('click',()=>{
+  document.querySelectorAll('mark.hl').forEach(m=>{
+    const id=m.dataset.issue; STATE.issues[id]='minimal'; m.textContent=VARS[id].minimal; m.style.background='#d1fae5';
+  });
+  updateProgress();
+});
+
+// Excerpt-only mode population
+const excerptMap={
+  "ISS-001": {heading:"Use of Information", page:2, text_before:"The Recipient may use CI for ", text_span:"any business purpose", para_id:"p2"},
+  "ISS-002": {heading:"Residuals", page:3, text_before:"Recipient may use information retained in unaided memory, which shall ", text_span:"survive termination", para_id:"p4"},
+  "ISS-003": {heading:"Return/Destroy", page:4, text_before:"Upon request, Recipient shall return materials within a ", text_span:"reasonable time", para_id:"p5"}
+};
+function renderExcerptCards(){
+  const listX=document.getElementById('issuesListX');
+  const vX=document.getElementById('viewerX');
+  listX.innerHTML=''; vX.innerHTML='';
+  Object.keys(excerptMap).forEach(id=>{
+    const meta=excerptMap[id];
+    const item=document.createElement('div');
+    item.className='issue'; item.dataset.id=id; item.style.cursor='pointer';
+    item.innerHTML=`<span class="badge ${id==='ISS-001'?'high':id==='ISS-002'?'med':'low'}">${id==='ISS-001'?'High':id==='ISS-002'?'Med':'Low'}</span> ${meta.heading} — “${meta.text_span}”<div class="small" style="color:#64748b">Page ${meta.page}</div>`;
+    listX.appendChild(item);
+    const card=document.createElement('div');
+    card.className='note'; card.style.marginBottom='8px';
+    card.innerHTML=`<div><b>${meta.heading}</b> <span class="small">(${id}) • Page ${meta.page}</span></div>
+      <div class="small">… ${meta.text_before}<mark class="hl" data-issue="${id}">${meta.text_span}</mark> …</div>`;
+    vX.appendChild(card);
+    item.addEventListener('click',()=>{ gotoStep(2); document.getElementById('mark-'+id)?.scrollIntoView({behavior:'smooth',block:'center'}); });
+    card.querySelector('mark.hl').addEventListener('click',(e)=>{selectExcerpt(e.target)});
+  });
+}
+function selectExcerpt(m){
+  document.querySelectorAll('#viewerX mark.hl').forEach(x=>x.classList.remove('selected'));
+  m.classList.add('selected');
+  const id=m.dataset.issue;
+  const tgt=document.getElementById('controlTargetX');
+  tgt.innerHTML=`
+    <div class="small" style="margin-bottom:6px">Choose adjustment for <b>${id}</b>:</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+      <button class="btn secondary" data-c="minimal">Minimal</button>
+      <button class="btn secondary" data-c="benchmark">Benchmark</button>
+      <button class="btn secondary" data-c="conservative">Conservative</button>
+      <button class="btn" data-c="accept">Accept As‑Is</button>
+    </div>`;
+  tgt.querySelectorAll('[data-c]').forEach(b=>b.addEventListener('click',()=>{
+    const c=b.dataset.c;
+    if(c==='accept'){ STATE.issues[id]='accept'; }
+    else { STATE.issues[id]=c; m.textContent = VARS[id][c]; m.style.background='#d1fae5'; }
+    updateProgress();
+  }));
+}
+
+// Filter in full mode
+document.getElementById('filter').addEventListener('change',(e)=>{
+  const v=e.target.value;
+  document.querySelectorAll('#issuesList .issue').forEach(it=>{
+    it.style.display = (v==='all'||it.dataset.sev===v)?'block':'none';
+  });
+});
+
+// Step 3 tabs
+const tabs=document.querySelectorAll('.tab');const views={orig:document.getElementById('orig'),rev:document.getElementById('rev'),diff:document.getElementById('diff')};
+tabs.forEach(t=>t.addEventListener('click',()=>{tabs.forEach(x=>x.classList.remove('active'));t.classList.add('active');Object.values(views).forEach(v=>v.style.display='none');views[t.dataset.tab].style.display='block';}));
+
+function refreshFinal(){
+  const r1=STATE.issues["ISS-001"]?VARS["ISS-001"][STATE.issues["ISS-001"]]||"any business purpose":"any business purpose";
+  const r2=STATE.issues["ISS-002"]?VARS["ISS-002"][STATE.issues["ISS-002"]]||"survive termination":"survive termination";
+  const r3=STATE.issues["ISS-003"]?VARS["ISS-003"][STATE.issues["ISS-003"]]||"reasonable time":"reasonable time";
+  document.getElementById('revBody').innerHTML=`
+    <p><b>Use of Information.</b> The Recipient may use CI <u>${r1}</u>.</p>
+    <p><b>Residuals.</b> Recipient <u>${r2}</u>.</p>
+    <p><b>Return/Destroy.</b> Upon request, Recipient shall return materials <u>${r3}</u>.</p>`;
+  document.getElementById('diffBody').innerHTML=`
+    <p><b>Use of Information.</b> The Recipient may use CI for <del>any business purpose</del><ins>${r1}</ins>.</p>
+    <p><b>Residuals.</b> Recipient may use information retained in unaided memory, which shall <del>survive termination</del><ins>${r2}</ins>.</p>
+    <p><b>Return/Destroy.</b> Upon request, Recipient shall return materials within a <del>reasonable time</del><ins>${r3}</ins>.</p>`;
+}
+
+document.getElementById('finalSign').addEventListener('change',updateExportButtons);
+document.getElementById('exportBtn').addEventListener('click',()=>gotoStep(3));
+document.getElementById('dlRedline').addEventListener('click',()=>alert('Generating Redline (.docx)…'));
+document.getElementById('dlClean').addEventListener('click',()=>alert('Generating Clean (.docx)…'));
+document.getElementById('dlLog').addEventListener('click',()=>alert('Exporting Decision Log (.xlsx)…'));
+
+// init excerpt mode content
+renderExcerptCards();
+</script>
+</body>
+</html>
