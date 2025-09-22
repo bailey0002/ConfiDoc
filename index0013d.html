@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>ConfiDoc — v13d (Paste-to-Load, Full Doc Viewer)</title>
+<style>
+body{font-family:Arial,Helvetica,sans-serif;margin:0;padding:0;background:#f8f9fa;color:#111}
+.app{display:grid;grid-template-columns:260px 1fr;gap:12px;min-height:100vh;padding:12px}
+.sidebar,.panel{background:#fff;border:1px solid #ddd;border-radius:10px;padding:12px}
+.step{display:inline-block;margin:2px;padding:4px 8px;border-radius:12px;border:1px solid #ccc;font-size:13px;cursor:pointer}
+.step.active{background:#111;color:#fff}
+.viewer{border:1px solid #ccc;border-radius:10px;padding:12px;max-height:60vh;overflow:auto;white-space:pre-wrap;line-height:1.5;background:#fcfcfd}
+mark.hl{background:#fffa8b;padding:2px;border-radius:4px}
+.issue{padding:4px;border-bottom:1px solid #eee;font-size:13px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="sidebar">
+    <div>
+      <span class="step active" data-step="1">1 Intake</span>
+      <span class="step" data-step="2">2 Review</span>
+      <span class="step" data-step="3">3 Final</span>
+    </div>
+    <hr/>
+    <p style="font-size:13px">Paste NDA text to simulate loading. This prototype does not process Word/PDF uploads.</p>
+  </div>
+  <div class="panel">
+    <section id="step1">
+      <h3>Step 1 — Intake</h3>
+      <textarea id="pasteBox" style="width:100%;height:120px"></textarea><br/>
+      <button id="loadBtn">Load into Viewer</button>
+    </section>
+    <section id="step2" style="display:none">
+      <h3>Step 2 — Review</h3>
+      <div style="display:grid;grid-template-columns:1fr 2fr 1fr;gap:10px">
+        <div>
+          <h4>Issues</h4>
+          <div id="issuesList"></div>
+        </div>
+        <div>
+          <h4>Full Document</h4>
+          <div class="viewer" id="viewer"></div>
+        </div>
+        <div>
+          <h4>Controls</h4>
+          <div id="controls">Select a highlight to adjust</div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+<script>
+const DETECT=[
+ {id:"ISS-001",label:"Use of Information",sev:"High",phrase:/any business purpose/gi,replace:"solely for evaluating a potential transaction"},
+ {id:"ISS-002",label:"Residuals",sev:"Med",phrase:/survive termination/gi,replace:"shall not rely on unaided memory"},
+ {id:"ISS-003",label:"Return/Destroy",sev:"Low",phrase:/reasonable time/gi,replace:"within ten (10) days"}
+];
+const STATE={issues:{},pasted:""};
+function gotoStep(n){document.querySelectorAll('section').forEach(s=>s.style.display='none');document.getElementById('step'+n).style.display='block';
+ document.querySelectorAll('.step').forEach(s=>s.classList.toggle('active',s.dataset.step==n));}
+document.getElementById('loadBtn').onclick=()=>{
+ const text=document.getElementById('pasteBox').value.trim();
+ if(!text){alert("Paste some NDA text first.");return;}
+ STATE.pasted=text;renderDoc(text);gotoStep(2);};
+function renderDoc(text){
+ let html=text;STATE.issues={};
+ DETECT.forEach(d=>{html=html.replace(d.phrase,m=>`<mark class="hl" data-id="${d.id}">${m}</mark>`);STATE.issues[d.id]=null;});
+ document.getElementById('viewer').innerHTML=html;
+ const list=document.getElementById('issuesList');list.innerHTML='';
+ DETECT.forEach(d=>{if((text.match(d.phrase))){const div=document.createElement('div');div.className='issue';div.textContent=d.label+' ('+d.sev+')';div.onclick=()=>selectIssue(d.id,d.replace);list.appendChild(div);}});
+ document.querySelectorAll('#viewer mark').forEach(m=>m.onclick=()=>{selectIssue(m.dataset.id,DETECT.find(d=>d.id===m.dataset.id).replace);});
+}
+function selectIssue(id,replacement){
+ const controls=document.getElementById('controls');
+ controls.innerHTML=`<p>Decision for ${id}:</p>
+ <button onclick="applyReplace('${id}','${replacement}')">Apply Minimal</button>
+ <button onclick="accept('${id}')">Accept As-Is</button>`;}
+function applyReplace(id,text){
+ const mark=document.querySelector('mark[data-id="'+id+'"]');if(mark){mark.textContent=text;mark.style.background='#d1fae5';STATE.issues[id]='replace';}}
+function accept(id){
+ const mark=document.querySelector('mark[data-id="'+id+'"]');if(mark){mark.style.background='#c7d2fe';STATE.issues[id]='accept';}}
+</script>
+</body>
+</html>
