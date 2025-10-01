@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ConfiDoc Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .dashboard, .nav-bar, .intake-checklist, .flagged-provisions, .full-document, .decision, .final-review { margin: 20px; padding: 10px; border: 1px solid #ccc; }
+        .primary-btn { background: #78FBF4; color: black; padding: 5px 10px; }
+        .secondary-btn { background: #ddd; color: black; padding: 5px 10px; }
+        .status-light { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; }
+        .status-green { background: #78FBF4; }
+        .status-red { background: #FF1D00; }
+        .progress-circle { position: relative; width: 50px; height: 50px; border-radius: 50%; background: conic-gradient(#78FBF4 0% 75%, #ddd 75%); }
+        .progress-circle span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        .toggle { display: none; }
+        .toggle + label { background: #ddd; border-radius: 20px; width: 40px; height: 20px; display: inline-block; position: relative; }
+        .toggle + label::before { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: white; border-radius: 50%; transition: 0.3s; }
+        .toggle:checked + label { background: #78FBF4; }
+        .toggle:checked + label::before { left: 22px; }
+    </style>
+</head>
+<body>
+
+    <!-- Dashboard [UI-1a] -->
+    <div class="dashboard">
+        <h2>Dashboard</h2>
+        <button class="primary-btn" id="start-review-btn">Start a Review</button>
+        <button class="secondary-btn" id="go-to-intake-btn">Go to Intake</button>
+        <div>
+            <h3>Recent</h3>
+            <ul id="recent-docs-list">
+                <li>NDA — Swift vs. Harlow Bio</li>
+                <li>NDA — Nova Capital / Helix AI</li>
+                <li>NDA — Orion Partners</li>
+            </ul>
+            <div id="team-compliance-card">Team: Avg first-pass compliance 64%</div>
+        </div>
+        <footer>© ConfiDoc | Privacy</footer>
+    </div>
+
+    <!-- Navigation Bar [UI-1b] -->
+    <div class="nav-bar">
+        <h3>Navigation Bar</h3>
+        <nav id="nav-bar">
+            <ul>
+                <li>1 Intake</li>
+                <li>2 Review</li>
+                <li>3 Final</li>
+            </ul>
+        </nav>
+        <!-- Dark Mode Toggle (replaced with toggle switch) -->
+        <div>
+            <span style="color: gray;">Dark Mode</span>
+            <input type="checkbox" id="dark-mode-toggle" class="toggle">
+            <label for="dark-mode-toggle"></label>
+        </div>
+        <!-- Parsing Status (moved here, replaced with circular progress bar, below start-review-btn but positioned in nav for demo) -->
+        <div id="parsing-status">
+            <div class="progress-circle"><span>75%</span></div> <!-- Placeholder; JS for dynamic % -->
+            Parsing provisions…
+        </div>
+    </div>
+
+    <!-- Intake & Checklist [UI-1]/[UI-2] -->
+    <div class="intake-checklist">
+        <h3>Intake & Checklist</h3>
+        <!-- Card 1: Upload and Inputs -->
+        <div>
+            <p>DOCX-first. PDF supported but typically converted.</p>
+            <input type="file" id="file-upload-input" accept=".docx,.pdf">
+            <!-- Demo Templates (updated options, NDA default) -->
+            <select id="demo-template-dropdown">
+                <option selected>NDA</option>
+                <option>Joinder</option>
+                <option>NRL (Access Letter)</option>
+            </select>
+            <!-- Parties Input (label changed, added fourth field) -->
+            <h4>Document Information</h4>
+            <input type="text" placeholder="Lender legal name (prefilled)" id="parties-input-1">
+            <input type="text" placeholder="Counterparty legal name" id="parties-input-2">
+            <input type="text" placeholder="Effective date (YYYY-MM-DD)" id="parties-input-3">
+            <input type="text" placeholder="Specific concerns/issues" id="parties-input-4"> <!-- New field -->
+            <button class="primary-btn" id="proceed-to-review-btn">Proceed to Review</button>
+            <button class="secondary-btn" id="auto-fix-btn">Auto-Fix Simple</button>
+        </div>
+        <!-- Card 2: Checklist (updated indicators to lights) -->
+        <div>
+            <h4>Minimum Requirements</h4>
+            <ul id="checklist">
+                <li><span class="status-light status-green"></span> Parties Identified</li>
+                <li><span class="status-light status-green"></span> Governing Law Present</li>
+                <li><span class="status-light status-red"></span> Confidentiality Definition</li>
+                <li><span class="status-light status-green"></span> Term Specified</li>
+                <li><span class="status-light status-red"></span> Return/Destruction Clause</li>
+            </ul>
+        </div>
+        <!-- Card 3: Instructions (new, top) and Notes (shifted down) -->
+        <div>
+            <!-- New Instructions Section (placeholder) -->
+            <h4>Instructions</h4>
+            <p>[Placeholder: Basic instructions on process flow and UI features will be inserted here later.]</p>
+            <!-- Notes (shifted) -->
+            <h4>Notes</h4>
+            <textarea id="notes-textarea">Configure benchmark/tolerance now. Parties are optional and can be filled later before export.</textarea>
+        </div>
+    </div>
+
+    <!-- Flagged Provisions [UI-3] (unchanged) -->
+    <div class="flagged-provisions">
+        <h3>Flagged Provisions</h3>
+        <p>0/3 resolved</p>
+        <div>
+            <label>All severities <input type="checkbox" checked></label>
+            <label>High <input type="checkbox"></label>
+            <label>Medium <input type="checkbox"></label>
+            <label>Low <input type="checkbox"></label>
+        </div>
+        <div>
+            <label>All types <input type="checkbox" checked></label>
+            <label>Use <input type="checkbox"></label>
+            <label>Residuals <input type="checkbox"></label>
+            <label>Return/Destroy <input type="checkbox"></label>
+        </div>
+        <ul id="flagged-provisions-list">
+            <li>High: Use of Information — “any business purpose” Rule NDA-UR-01 • §2</li>
+            <li>Med: Residuals — “survive termination” Rule NDA-RS-04 • §4</li>
+            <li>Low: Return/Destroy — “reasonable time” Rule NDA-RD-02 • §5</li>
+        </ul>
+        <div>
+            <h4>Apply Minimal:</h4>
+            <!-- Filters similar to above -->
+            <button>Apply</button>
+        </div>
+        <div>
+            <h4>Apply Benchmark:</h4>
+            <!-- Filters similar to above -->
+            <button>Apply</button>
+        </div>
+    </div>
+
+    <!-- Full Document [UI-3] (unchanged) -->
+    <div class="full-document">
+        <h3>Full Document</h3>
+        <button id="excerpt-mode-toggle">Excerpt Mode</button>
+        <button id="next-issue-btn">Next Issue</button>
+        <p>1. Purpose. The parties intend to explore a potential transaction and will exchange Confidential Information (“CI”).</p>
+        <!-- ... rest of document text ... -->
+    </div>
+
+    <!-- Decision [UI-4] (unchanged) -->
+    <div class="decision">
+        <h3>Decision</h3>
+        <p>Select a flagged provision or highlighted span.</p>
+        <div id="decision-btn-group">
+            <button>Accept</button>
+            <button>Minimal</button>
+            <button>Benchmark</button>
+            <button>Conservative</button>
+        </div>
+        <button id="apply-custom-btn">Apply Custom</button>
+        <button id="undo-btn">Undo</button>
+        <div id="provision-summary">Provision Summary: Aligns with lender tolerance. Benchmark cite shown here.</div>
+        <div id="clause-preview">This clause only (preview) —</div>
+        <div id="progress-bar">Progress</div>
+        <p id="shortcuts-info">Shortcuts: A=Accept • M=Minimal • B=Benchmark • C=Conservative • N=Next</p>
+    </div>
+
+    <!-- Final Review & Export [UI-5] (unchanged) -->
+    <div class="final-review">
+        <h3>Final Review & Export</h3>
+        <label><input type="checkbox" id="confirm-checkbox"> I confirm all changes have been reviewed and approved in compliance with lender guidelines.</label>
+        <div id="view-tabs">
+            <button>Original</button>
+            <button>Revised</button>
+            <button>Redline</button>
+            <button>Audit Log</button>
+        </div>
+        <table id="issue-decision-table">
+            <tr><th>Issue</th><th>Decision</th><th>Rule</th><th>Rationale</th></tr>
+        </table>
+        <div>
+            <h4>Export Format</h4>
+            <label>Word <input type="radio" name="export-format"></label>
+            <label>PDF <input type="radio" name="export-format"></label>
+        </div>
+        <p>Pending: resolve High/Med, pass checklist, and confirm sign-off.</p>
+        <button id="download-redline-btn">Download Redline</button>
+        <button id="download-clean-btn">Download Clean</button>
+        <button id="decision-log-btn">Decision Log (CSV)</button>
+    </div>
+
+</body>
+</html>
