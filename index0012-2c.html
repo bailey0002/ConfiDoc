@@ -110,17 +110,15 @@ hr.sep{border:none;height:1px;background:var(--border);margin:10px 0}
 <label class="small" style="margin-top:8px">Upload NDA (.docx)</label>
 <input class="input" placeholder="(Mock) Choose file…"/>
 <div class="small">Parsing provisions…</div>
-<div class="progress"><span style="width:85%"></span></div>
 <div class="row" style="margin-top:8px">
-<select class="input" id="benchmark" style="max-width:50%"><option>Demo — Lender Standard v6</option><option>Demo — Lender Strict v6</option></select>
-<select class="input" id="tolerance" style="max-width:45%"><option>Default</option><option>Strict</option><option>Lenient</option></select>
+<select class="input" id="benchmark" style="max-width:50%"><option>NDA - Standard v6</option><option>NRL - Access Letter v6</option></select>
 </div>
 <hr class="sep"/>
 <h4>Parties (optional)</h4>
-<input class="input" id="partyLender" placeholder="Lender legal name (prefilled)"/>
-<input class="input" id="partyCounter" placeholder="Counterparty legal name"/>
-<input class="input" id="effective" placeholder="Effective date (YYYY-MM-DD)"/>
-<div class="row" style="margin-top:10px"><button class="btn" id="gotoReview">Proceed to Review</button><button class="btn secondary" id="autoFix">Auto‑Fix Simple</button></div>
+<input class="input" id="partyLender" placeholder="Lender (Full Legal Name) (prefilled)"/>
+<input class="input" id="partyCounter" placeholder="Counterparty (Full Legal Name)"/>
+<input class="input" id="effective" placeholder="Effective Date (YYYY-MM-DD)"/>
+<div class="row" style="margin-top:10px"><button class="btn" id="gotoReview">Start Analysis</button><button class="btn secondary" id="autoFix">Auto‑Fix (Min. Requirements) Simple</button></div>
 </div>
 <div class="card">
 <h3>Minimal Requirements</h3>
@@ -145,7 +143,6 @@ hr.sep{border:none;height:1px;background:var(--border);margin:10px 0}
 <h2 style="margin:0">Flagged Provisions</h2>
 <div class="small"><span id="resolvedCount">0</span>/3 resolved</div>
 </div>
-<div class="progress"><span id="progBar" style="width:0%"></span></div>
 <div class="row" style="margin-top:8px">
 <select class="input" id="severityFilter" style="max-width:150px"><option value="all">All severities</option><option value="high">High</option><option value="med">Medium</option><option value="low">Low</option></select>
 <select class="input" id="typeFilter" style="max-width:170px"><option value="all">All types</option><option value="use">Use</option><option value="residuals">Residuals</option><option value="return">Return/Destroy</option></select>
