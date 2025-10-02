@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ConfiDoc — Excerpt Review Demo</title>
+<style>
+  /* ------------- Base + Typography (ChatGPT-like system stack) ------------- */
+  :root{
+    --bg: #0f1115;
+    --bg-elev: #141821;
+    --glass: rgba(255,255,255,0.06);
+    --glass-opaque: rgba(22,25,32,0.85);
+    --border: rgba(255,255,255,0.1);
+    --text: #e7e9ee;
+    --muted: #a7b0bf;
+    --accent: #2ED0FF;     /* your cyan/teal accent */
+    --accent-2: #67f2d6;   /* soft green-cyan for glows */
+    --chip: rgba(255,255,255,0.08);
+    --danger: #ff6b6b;
+    --warn: #f5a524;
+    --ok: #63e6be;
+    --shadow: 0 10px 30px rgba(0,0,0,0.35);
+    --radius-lg: 16px;
+    --radius-md: 12px;
+    --radius-sm: 10px;
+    --glass-blur: 16px;
+    --focus: 0 0 0 3px rgba(46,208,255,0.35);
+  }
+  .light{
+    --bg:#f6f7fb;
+    --bg-elev:#ffffff;
+    --glass:rgba(255,255,255,0.8);
+    --glass-opaque:rgba(255,255,255,0.92);
+    --border: rgba(10,15,20,0.08);
+    --text:#141821;
+    --muted:#606e7f;
+    --chip: rgba(10,15,20,0.04);
+    --shadow: 0 10px 30px rgba(22,28,36,0.12);
+    --focus: 0 0 0 3px rgba(46,208,255,0.35);
+  }
+  html,body{
+    height:100%;
+    margin:0;
+    background: radial-gradient(1200px 1200px at 20% -10%, rgba(46,208,255,0.15), transparent 60%),
+                radial-gradient(1000px 1000px at 120% 20%, rgba(103,242,214,0.14), transparent 55%),
+                var(--bg);
+    color:var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  *{ box-sizing:border-box }
+  a{ color:var(--accent) }
+
+  /* ------------- Layout ------------- */
+  .shell{
+    max-width:1200px;
+    margin: clamp(12px,3vw,28px) auto;
+    padding: clamp(10px,2vw,20px);
+  }
+  .header{
+    position: sticky; top: 10px; z-index: 40;
+    display:flex; align-items:center; gap:14px;
+    padding:12px 14px;
+    border:1px solid var(--border);
+    background: var(--glass-opaque);
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    backdrop-filter: blur(var(--glass-blur));
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+  }
+  .logo{
+    width:32px; height:32px; border-radius:8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display:grid; place-items:center; color:#081018; font-weight:900;
+    letter-spacing:0.5px;
+  }
+  .brand{
+    font-weight:700; font-size: 14.5px; letter-spacing:0.3px;
+  }
+  .spacer{ flex:1 }
+  .search{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 12px; min-width:220px;
+    border:1px solid var(--border); border-radius: 999px;
+    background: var(--chip);
+  }
+  .search input{
+    border:none; outline:none; background:transparent; color:var(--text);
+    width: 220px; font-size: 14px;
+  }
+  .toggle{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 12px; border:1px solid var(--border);
+    border-radius: 999px; background: var(--chip); cursor:pointer;
+    user-select:none;
+  }
+
+  /* ------------- Controls row ------------- */
+  .controls{
+    margin-top:16px;
+    display:flex; flex-wrap:wrap; gap:10px;
+    align-items:center;
+  }
+  .pill{
+    padding:10px 14px; border-radius:999px; border:1px solid var(--border);
+    background:var(--glass-opaque); cursor:pointer; user-select:none;
+    box-shadow: var(--shadow);
+    transition: transform .12s ease, box-shadow .2s ease, background .2s ease;
+  }
+  .pill.active{
+    background: linear-gradient(135deg, rgba(46,208,255,0.18), rgba(103,242,214,0.18));
+    border-color: rgba(46,208,255,0.45);
+    box-shadow: 0 6px 22px rgba(46,208,255,0.2);
+  }
+  .pill:focus-visible{ outline:none; box-shadow: var(--focus) }
+  .select{
+    padding:10px 14px; border-radius:999px; border:1px solid var(--border);
+    background:var(--glass-opaque); box-shadow: var(--shadow); color:var(--text);
+  }
+
+  /* ------------- Main grid ------------- */
+  .grid{
+    display:grid; grid-template-columns: 1fr 340px; gap:16px; margin-top:16px;
+  }
+  @media (max-width: 980px){
+    .grid{ grid-template-columns: 1fr }
+  }
+
+  /* ------------- Card list ------------- */
+  .list{
+    display:grid; gap:12px;
+  }
+  .card{
+    border:1px solid var(--border);
+    background: var(--glass-opaque);
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    backdrop-filter: blur(var(--glass-blur));
+    border-radius: var(--radius-lg);
+    padding:14px;
+    box-shadow: var(--shadow);
+    transition: transform .12s ease, box-shadow .2s ease;
+  }
+  .card:hover{ transform: translateY(-1px) }
+  .card-head{
+    display:flex; gap:10px; align-items:center; margin-bottom:8px;
+  }
+  .chip{
+    padding:4px 10px; border-radius:999px; background: var(--chip);
+    border:1px solid var(--border); font-size:12px; color:var(--muted)
+  }
+  .title{ font-weight:600 }
+  .meta{ color:var(--muted); font-size:12.5px }
+  .excerpt{
+    margin-top:8px; padding:10px 12px; border-radius: var(--radius-md);
+    border:1px dashed var(--border);
+    background: rgba(0,0,0,0.03);
+    color:var(--text);
+    max-height: 110px; overflow:hidden; position:relative;
+  }
+  .fade{
+    content:""; position:absolute; left:0; right:0; bottom:0; height:50px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0), var(--glass-opaque));
+    border-bottom-left-radius: var(--radius-md); border-bottom-right-radius:var(--radius-md);
+    pointer-events:none;
+  }
+  .actions{
+    display:flex; flex-wrap:wrap; gap:10px; margin-top:12px;
+  }
+  .btn{
+    padding:10px 12px; border-radius: 10px; border:1px solid var(--border);
+    background: var(--chip); cursor:pointer; user-select:none;
+    transition: transform .12s ease, box-shadow .2s ease, background .2s ease;
+  }
+  .btn.primary{
+    background: linear-gradient(135deg, rgba(46,208,255,0.18), rgba(103,242,214,0.18));
+    border-color: rgba(46,208,255,0.45);
+    box-shadow: 0 6px 22px rgba(46,208,255,0.2), inset 0 0 0 1px rgba(255,255,255,0.06);
+  }
+  .btn:focus-visible{ outline:none; box-shadow: var(--focus) }
+
+  /* ------------- Side panel (Customize / Queue) ------------- */
+  .side{
+    position: sticky; top: calc(10px + 60px + 16px);
+    display:flex; flex-direction:column; gap:12px;
+    height: calc(100dvh - 160px);
+  }
+  @media (max-width: 980px){ .side{ position:relative; top:0; height:auto } }
+  .panel{
+    border:1px solid var(--border); background:var(--glass-opaque);
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    backdrop-filter: blur(var(--glass-blur));
+    border-radius: var(--radius-lg); padding:14px; box-shadow: var(--shadow);
+  }
+  .panel h3{ margin: 4px 0 10px; font-size: 15px }
+  .kv{ display:grid; grid-template-columns: 1fr auto; gap:8px; font-size:13px; color:var(--muted) }
+  .textarea{
+    width:100%; min-height:120px; resize:vertical;
+    padding:10px 12px; border-radius: var(--radius-md); border:1px solid var(--border);
+    background: rgba(0,0,0,0.03); color:var(--text);
+  }
+  .queue{
+    display:grid; gap:10px; max-height:260px; overflow:auto;
+  }
+  .queue-item{
+    border:1px dashed var(--border); border-radius: var(--radius-md);
+    padding:10px 12px; font-size:13px; color:var(--muted);
+    display:flex; justify-content:space-between; gap:10px;
+  }
+
+  /* ------------- Peek popover ------------- */
+  .popover{
+    position: fixed; z-index: 60; inset:0; display:none; place-items:center;
+    background: rgba(0,0,0,0.45);
+  }
+  .popover.show{ display:grid }
+  .peek{
+    width:min(680px, 92vw); height:min(75vh, 620px);
+    background: var(--glass-opaque); border:1px solid var(--border);
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    backdrop-filter: blur(var(--glass-blur));
+    border-radius: var(--radius-lg); box-shadow: var(--shadow);
+    padding:12px; display:flex; flex-direction:column; gap:10px;
+  }
+  .peek-header{ display:flex; align-items:center; justify-content:space-between }
+  .peek-body{
+    flex:1; border-radius: var(--radius-md); border:1px dashed var(--border);
+    background: repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0 12px, rgba(255,255,255,0.05) 12px 24px);
+    display:grid; place-items:center; color:var(--muted); text-align:center; padding:18px;
+  }
+
+  /* ------------- Toast ------------- */
+  .toast{
+    position: fixed; bottom: 16px; left:50%; transform: translateX(-50%);
+    z-index:70; padding:10px 14px; border-radius: 999px;
+    background: linear-gradient(135deg, rgba(46,208,255,0.18), rgba(103,242,214,0.18));
+    border:1px solid rgba(46,208,255,0.45);
+    color:var(--text); box-shadow: var(--shadow); display:none;
+  }
+  .toast.show{ display:block }
+
+  /* ------------- Utility ------------- */
+  .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0 }
+</style>
+</head>
+<body class="light">
+  <div class="shell">
+    <!-- Header -->
+    <div class="header" role="banner">
+      <!-- Replace this block with your LIGHT logo <img> when in .light mode, and DARK logo when not -->
+      <div class="logo" aria-hidden="true">C</div>
+      <div class="brand">ConfiDoc — Excerpt Review (Demo)</div>
+      <div class="spacer"></div>
+      <label class="search" aria-label="Search flags">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M21 21l-3.8-3.8M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <input id="q" placeholder="Search excerpt or rule…" />
+      </label>
+      <button class="toggle" id="modeToggle" aria-pressed="false" title="Toggle light/dark">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 3v2m0 14v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M3 12h2m14 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <span>Light/Dark</span>
+      </button>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls" role="tablist" aria-label="Filter pills">
+      <button class="pill active" data-filter="all" role="tab" aria-selected="true">All</button>
+      <button class="pill" data-filter="minimal">Minimal</button>
+      <button class="pill" data-filter="benchmark">Benchmark</button>
+      <button class="pill" data-filter="custom">Custom</button>
+      <select class="select" id="severity">
+        <option value="any">Severity: Any</option>
+        <option value="high">Severity: High</option>
+        <option value="medium">Severity: Medium</option>
+        <option value="low">Severity: Low</option>
+      </select>
+    </div>
+
+    <!-- Main -->
+    <div class="grid">
+      <!-- Excerpt List -->
+      <div class="list" id="list" aria-live="polite"></div>
+
+      <!-- Side Panel -->
+      <aside class="side" aria-label="Edit & Queue">
+        <section class="panel" id="customize">
+          <h3>Customize Suggestion</h3>
+          <div class="kv">
+            <div>Clause</div><div id="c_clause">—</div>
+            <div>Rule(s)</div><div id="c_rules">—</div>
+            <div>Severity</div><div id="c_sev">—</div>
+          </div>
+          <div style="height:8px"></div>
+          <label class="sr-only" for="c_text">Edited text</label>
+          <textarea class="textarea" id="c_text" placeholder="Proposed replacement or insertions…"></textarea>
+          <div class="actions">
+            <button class="btn" id="c_reset">Reset</button>
+            <button class="btn primary" id="c_apply">Apply Custom</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h3>Queued Changes</h3>
+          <div class="queue" id="queue"></div>
+          <div class="actions">
+            <button class="btn" id="exportJson">Export JSON</button>
+            <button class="btn" id="exportCsv">Export CSV</button>
+            <button class="btn" id="exportSummary">Summary (Print/PDF)</button>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <!-- Peek Popover -->
+  <div class="popover" id="peek">
+    <div class="peek" role="dialog" aria-modal="true" aria-labelledby="peekTitle">
+      <div class="peek-header">
+        <div id="peekTitle" class="title">Peek: Page —</div>
+        <button class="btn" id="peekClose">Close</button>
+      </div>
+      <div class="peek-body">
+        <div>
+          <div style="font-weight:600;margin-bottom:6px;">Document slice placeholder</div>
+          <div style="font-size:13px">Drop PDF viewer here in MVP (e.g., PDF.js). For now this shows a safe preview area proving the “Peek” concept.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite">Applied to queue</div>
+
+<script>
+/* ------------------------ Demo Data (fixtures) ------------------------ */
+const FLAGS = [
+  {
+    flag_id: "confidentiality.duration",
+    clause_id: "confidentiality.main",
+    title: "Confidentiality — Duration",
+    excerpt: "…Recipient shall keep Discloser’s Confidential Information confidential for two (2) years from the Effective Date…",
+    provenance: { page: 7, hash: "sha1:abc7" },
+    status: { minimal_pass: true, benchmark_pass: false, severity: "high", bucket: "benchmark" },
+    rules: ["duration>=5y"],
+    suggestion: {
+      preset: "Standard",
+      replace: { from: "two (2) years", to: "five (5) years" },
+      inserts: []
+    }
+  },
+  {
+    flag_id: "confidentiality.return_destroy",
+    clause_id: "confidentiality.main",
+    title: "Confidentiality — Return/Destroy",
+    excerpt: "…Upon termination, Recipient may retain copies as required by law…",
+    provenance: { page: 8, hash: "sha1:abc8" },
+    status: { minimal_pass: false, benchmark_pass: false, severity: "high", bucket: "minimal" },
+    rules: ["return_or_destroy"],
+    suggestion: {
+      preset: "Standard",
+      replace: null,
+      inserts: ["Upon request, Recipient shall promptly return or destroy all Confidential Information."]
+    }
+  },
+  {
+    flag_id: "remedies.equitable",
+    clause_id: "remedies",
+    title: "Equitable Remedies",
+    excerpt: "…In the event of breach, monetary damages shall be sufficient remedy…",
+    provenance: { page: 12, hash: "sha1:abce" },
+    status: { minimal_pass: true, benchmark_pass: false, severity: "medium", bucket: "benchmark" },
+    rules: ["equitable_remedies"],
+    suggestion: {
+      preset: "Standard",
+      replace: null,
+      inserts: ["The Parties acknowledge that breach may cause irreparable harm and the Discloser is entitled to equitable remedies including injunctive relief."]
+    }
+  },
+  {
+    flag_id: "definitions.scope",
+    clause_id: "definitions",
+    title: "Definition — Confidential Information (scope)",
+    excerpt: "…Confidential Information excludes information developed independently without reference to the Discloser’s information…",
+    provenance: { page: 2, hash: "sha1:abcf" },
+    status: { minimal_pass: true, benchmark_pass: true, severity: "low", bucket: "custom" },
+    rules: ["scope_standard"],
+    suggestion: {
+      preset: "None",
+      replace: null,
+      inserts: []
+    }
+  }
+];
+
+let STATE = {
+  filter: "all",
+  severity: "any",
+  query: "",
+  selected: null,
+  queue: []
+};
+
+/* ------------------------ Utilities ------------------------ */
+const $ = (sel, el=document) => el.querySelector(sel);
+const $$ = (sel, el=document) => Array.from(el.querySelectorAll(sel));
+
+function escapeCsv(val){
+  if(val==null) return "";
+  const s = String(val);
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
+}
+
+function downloadBlob(content, filename, type="application/json"){
+  const blob = new Blob([content], {type});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
+
+/* ------------------------ Render List ------------------------ */
+function passesFilters(item){
+  if(STATE.filter!=="all" && item.status.bucket !== STATE.filter) return false;
+  if(STATE.severity!=="any" && item.status.severity !== STATE.severity) return false;
+  if(STATE.query){
+    const q = STATE.query.toLowerCase();
+    const hay = (item.title+" "+item.excerpt+" "+(item.rules||[]).join(" ")).toLowerCase();
+    return hay.includes(q);
+  }
+  return true;
+}
+
+function cardTemplate(item){
+  const sevColor = item.status.severity==="high" ? "var(--danger)" :
+                   item.status.severity==="medium" ? "var(--warn)" : "var(--ok)";
+  const bench = item.status.benchmark_pass ? "✅" : "❌";
+  return `
+    <article class="card" data-id="${item.flag_id}" tabindex="0" aria-labelledby="${item.flag_id}-t">
+      <div class="card-head">
+        <div class="chip" style="border-color:${sevColor}; color:${sevColor}">${item.status.severity.toUpperCase()}</div>
+        <div class="title" id="${item.flag_id}-t">${item.title}</div>
+      </div>
+      <div class="meta">Page ${item.provenance.page} • Benchmark: ${bench} • Rules: ${(item.rules||[]).join(", ")}</div>
+      <div class="excerpt"><div>${item.excerpt}</div><div class="fade"></div></div>
+      <div class="actions">
+        <button class="btn primary" data-act="apply" aria-label="Apply standard suggestion">Apply Standard</button>
+        <button class="btn" data-act="customize" aria-label="Customize suggestion">Customize…</button>
+        <button class="btn" data-act="peek" aria-label="Peek page">Peek page</button>
+        <button class="btn" data-act="copyref" aria-label="Copy page reference">Copy ref</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderList(){
+  const list = $("#list");
+  list.innerHTML = FLAGS.filter(passesFilters).map(cardTemplate).join("");
+}
+
+/* ------------------------ Customize Panel ------------------------ */
+function loadCustomize(item){
+  STATE.selected = item;
+  $("#c_clause").textContent = item.clause_id;
+  $("#c_rules").textContent = (item.rules||[]).join(", ");
+  $("#c_sev").textContent = item.status.severity;
+  const baseline = [ item.suggestion?.replace ? `Replace: "${item.suggestion.replace.from}" → "${item.suggestion.replace.to}"` : null,
+                     ...(item.suggestion?.inserts||[]).map(i => `Insert: ${i}`) ].filter(Boolean).join("\n");
+  $("#c_text").value = baseline || "";
+}
+
+/* ------------------------ Queue & Export ------------------------ */
+function pushQueue(entry){
+  STATE.queue.unshift(entry);
+  const q = $("#queue");
+  q.innerHTML = STATE.queue.map((d,i)=>`
+    <div class="queue-item">
+      <div>
+        <div><strong>${d.title}</strong> • p.${d.page} • ${d.action}</div>
+        <div>${d.rules.join(", ")}</div>
+      </div>
+      <button class="btn" data-remove="${i}">Remove</button>
+    </div>
+  `).join("");
+  showToast("Applied to queue");
+}
+
+function exportJson(){
+  const now = new Date().toISOString();
+  const payload = {
+    snapshot_ts: now,
+    count: STATE.queue.length,
+    items: STATE.queue
+  };
+  downloadBlob(JSON.stringify(payload,null,2), `decisions_${now.slice(0,19).replace(/[:T]/g,'-')}.json`, "application/json");
+}
+function exportCsv(){
+  const head = ["timestamp","flag_id","clause_id","title","page","action","rules","note"];
+  const rows = STATE.queue.map(d=>[
+    d.ts, d.flag_id, d.clause_id, d.title, d.page, d.action, d.rules.join("|"), (d.note||"")
+  ]);
+  const csv = [head, ...rows].map(r=>r.map(escapeCsv).join(",")).join("\n");
+  const now = new Date().toISOString();
+  downloadBlob(csv, `decisions_${now.slice(0,19).replace(/[:T]/g,'-')}.csv`, "text/csv");
+}
+function exportSummary(){
+  const win = window.open("", "_blank");
+  const rows = STATE.queue.map(d=>`
+    <tr>
+      <td>${d.ts}</td><td>${d.title}</td><td>${d.page}</td><td>${d.action}</td><td>${d.rules.join(", ")}</td>
+    </tr>`).join("");
+  win.document.write(`
+    <html><head><title>ConfiDoc Summary</title>
+    <style>
+      body{font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; padding:24px}
+      h1{font-size:18px}
+      table{border-collapse:collapse; width:100%}
+      td,th{border:1px solid #ccc; padding:8px; font-size:13px}
+      th{background:#f2f4f7}
+    </style></head>
+    <body>
+      <h1>Queued Changes Summary</h1>
+      <table>
+        <thead><tr><th>Time</th><th>Clause</th><th>Page</th><th>Action</th><th>Rules</th></tr></thead>
+        <tbody>${rows || `<tr><td colspan="5">No changes queued.</td></tr>`}</tbody>
+      </table>
+      <p style="margin-top:16px;font-size:12px;color:#555">Print or Save as PDF from your browser.</p>
+    </body></html>
+  `);
+  win.document.close();
+}
+
+/* ------------------------ Peek ------------------------ */
+function openPeek(page){
+  $("#peekTitle").textContent = "Peek: Page " + page;
+  $("#peek").classList.add("show");
+}
+$("#peekClose").addEventListener("click", ()=> $("#peek").classList.remove("show"));
+$("#peek").addEventListener("click", (e)=>{ if(e.target.id==="peek") $("#peek").classList.remove("show") });
+
+/* ------------------------ Toast ------------------------ */
+let toastTimer;
+function showToast(msg){
+  const t = $("#toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.classList.remove("show"), 1350);
+}
+
+/* ------------------------ Events ------------------------ */
+function bindEvents(){
+  // Pills
+  $$(".pill").forEach(p=>{
+    p.addEventListener("click", ()=>{
+      $$(".pill").forEach(x=>x.classList.remove("active"));
+      p.classList.add("active");
+      STATE.filter = p.dataset.filter;
+      renderList();
+    });
+  });
+  // Severity
+  $("#severity").addEventListener("change", (e)=>{ STATE.severity = e.target.value; renderList(); });
+  // Search
+  $("#q").addEventListener("input", (e)=>{ STATE.query = e.target.value.trim(); renderList(); });
+
+  // Delegate card buttons
+  $("#list").addEventListener("click", (e)=>{
+    const btn = e.target.closest("button"); if(!btn) return;
+    const card = e.target.closest(".card"); const id = card?.dataset.id;
+    const item = FLAGS.find(f=>f.flag_id===id); if(!item) return;
+    const act = btn.dataset.act;
+
+    if(act==="apply"){
+      pushQueue({
+        ts: new Date().toISOString(),
+        flag_id: item.flag_id,
+        clause_id: item.clause_id,
+        title: item.title,
+        page: item.provenance.page,
+        action: "Apply Standard",
+        rules: item.rules,
+        note: item.suggestion?.replace ? `Replace "${item.suggestion.replace.from}" → "${item.suggestion.replace.to}"` :
+              (item.suggestion?.inserts||[]).join(" | ")
+      });
+    }
+    if(act==="customize"){
+      loadCustomize(item);
+      $("#c_text").focus();
+    }
+    if(act==="peek"){ openPeek(item.provenance.page); }
+    if(act==="copyref"){
+      const txt = `Page ${item.provenance.page} • ${item.flag_id} • ${item.provenance.hash}`;
+      navigator.clipboard.writeText(txt).then(()=> showToast("Copied reference"));
+    }
+  });
+
+  // Queue remove
+  $("#queue").addEventListener("click", (e)=>{
+    const b = e.target.closest("button[data-remove]"); if(!b) return;
+    const idx = +b.dataset.remove;
+    STATE.queue.splice(idx,1);
+    // re-render queue
+    const event = new Event('applyQueueRender'); document.dispatchEvent(event);
+  });
+  document.addEventListener('applyQueueRender', ()=>{
+    const q = $("#queue");
+    q.innerHTML = STATE.queue.map((d,i)=>`
+      <div class="queue-item">
+        <div>
+          <div><strong>${d.title}</strong> • p.${d.page} • ${d.action}</div>
+          <div>${d.rules.join(", ")}</div>
+        </div>
+        <button class="btn" data-remove="${i}">Remove</button>
+      </div>
+    `).join("");
+  });
+
+  // Customize actions
+  $("#c_reset").addEventListener("click", ()=>{
+    if(!STATE.selected) return;
+    loadCustomize(STATE.selected);
+  });
+  $("#c_apply").addEventListener("click", ()=>{
+    if(!STATE.selected) return;
+    const note = $("#c_text").value.trim() || "Custom edit";
+    const it = STATE.selected;
+    pushQueue({
+      ts: new Date().toISOString(),
+      flag_id: it.flag_id,
+      clause_id: it.clause_id,
+      title: it.title,
+      page: it.provenance.page,
+      action: "Apply Custom",
+      rules: it.rules,
+      note
+    });
+  });
+
+  // Exports
+  $("#exportJson").addEventListener("click", exportJson);
+  $("#exportCsv").addEventListener("click", exportCsv);
+  $("#exportSummary").addEventListener("click", exportSummary);
+
+  // Mode toggle
+  $("#modeToggle").addEventListener("click", ()=>{
+    const body = document.body;
+    const isLight = body.classList.toggle("light");
+    // NOTE: swap logo <img> here if you replace the .logo block with actual images
+    $("#modeToggle").setAttribute("aria-pressed", String(!isLight));
+  });
+}
+
+/* ------------------------ Init ------------------------ */
+renderList();
+bindEvents();
+loadCustomize(FLAGS[0]);
+document.dispatchEvent(new Event('applyQueueRender'));
+</script>
+</body>
+</html>
