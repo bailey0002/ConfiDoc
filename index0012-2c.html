@@ -61,6 +61,15 @@ hr.sep{border:none;height:1px;background:var(--border);margin:10px 0}
 <input class="input" placeholder="(Mock) Choose .docx…"/>
 <div class="row" style="margin-top:8px"><button class="btn secondary" id="gotoIntake_side">Go to Intake</button></div>
 </div>
+<main class="main"><div class="kpi-gauge" id="circular-progress" style="display:flex;justify-content:center;align-items:center;margin:24px auto;max-width:280px;aspect-ratio:1/1">
+<svg aria-label="Overall progress" height="240" viewbox="0 0 120 120" width="240">
+<circle cx="60" cy="60" fill="none" r="54" stroke="#e6e6e6" stroke-width="12"></circle>
+<circle cx="60" cy="60" fill="none" id="gauge-arc" r="54" stroke="#2ED0FF" stroke-dasharray="339.292" stroke-dashoffset="84.823" stroke-linecap="round" stroke-width="12" transform="rotate(-90 60 60)">
+</circle>
+<text dominant-baseline="middle" fill="#111" font-size="22" text-anchor="middle" x="60" y="60">75%</text>
+<text fill="#64737A" font-size="11" text-anchor="middle" x="60" y="86">Overall</text>
+</svg>
+</div>
 <!-- Recent + metrics -->
 <div class="card">
 <div class="stack small">
@@ -78,15 +87,6 @@ hr.sep{border:none;height:1px;background:var(--border);margin:10px 0}
 </div>
 </aside>
 <!-- MAIN with Top Bar + Panels -->
-<main class="main"><div class="kpi-gauge" id="circular-progress" style="display:flex;justify-content:center;align-items:center;margin:24px auto;max-width:280px;aspect-ratio:1/1">
-<svg aria-label="Overall progress" height="240" viewbox="0 0 120 120" width="240">
-<circle cx="60" cy="60" fill="none" r="54" stroke="#e6e6e6" stroke-width="12"></circle>
-<circle cx="60" cy="60" fill="none" id="gauge-arc" r="54" stroke="#2ED0FF" stroke-dasharray="339.292" stroke-dashoffset="84.823" stroke-linecap="round" stroke-width="12" transform="rotate(-90 60 60)">
-</circle>
-<text dominant-baseline="middle" fill="#111" font-size="22" text-anchor="middle" x="60" y="60">75%</text>
-<text fill="#64737A" font-size="11" text-anchor="middle" x="60" y="86">Overall</text>
-</svg>
-</div>
 <div class="topbar">
 <div class="group">
 <span class="small" style="font-weight:800;opacity:.8">Navigation</span>
