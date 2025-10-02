@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ConfiDoc — Prototype (Patched + Mobile v2)</title>
+  <style>
+    :root {
+      --bg: #0f1216;
+      --panel: rgba(255,255,255,0.06);
+      --panel-border: rgba(255,255,255,0.12);
+      --text: #e8eef6;
+      --muted: #98a2ad;
+      --accent: #2ED0FF;
+      --good: #33d17a;
+      --warn: #ffcc66;
+      --bad:  #ff6b6b;
+      --shadow: 0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04);
+      --radius: 14px;
+      --chip-bg: rgba(255,255,255,0.08);
+      --chip-br: rgba(255,255,255,0.16);
+      --gap: 16px;
+      --icon: rgba(255,255,255,0.7);
+    }
+    [data-theme="light"] {
+      --bg: #f6f8fb;
+      --panel: rgba(255,255,255,1);
+      --panel-border: rgba(0,0,0,0.08);
+      --text: #1d232f;
+      --muted: #5a6b7a;
+      --shadow: 0 6px 20px rgba(0,0,0,0.08);
+      --chip-bg: rgba(0,0,0,0.04);
+      --chip-br: rgba(0,0,0,0.08);
+      --icon: rgba(0,0,0,0.6);
+    }
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      font-family: Inter, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      scroll-behavior: smooth;
+    }
+    * { box-sizing: border-box; }
+    .app {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 24px;
+      padding: 20px;
+      align-items: start;
+    }
+    .sidebar, .card, .panel {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .sidebar {
+      padding: 16px;
+      height: calc(100vh - 40px);
+      position: sticky;
+      top: 20px;
+      overflow: auto;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .brand svg { width: 28px; height: 28px; }
+    .brand .name { font-weight: 700; letter-spacing: 0.3px; }
+    .sidebar h2, .sidebar h3, .panel h2, .panel h3 {
+      margin: 0 0 12px 0;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+    .label-pill {
+      display: block;
+      text-align: center;
+      font-weight: 700;
+      margin: 0 0 10px 0;
+      color: var(--text);
+    }
+    .toggle {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 12px; color: var(--muted);
+    }
+    .toggle input { width: 44px; height: 24px; }
+    .card {
+      padding: 14px; margin-bottom: 14px;
+    }
+    .field {
+      display: grid; gap: 6px; margin-bottom: 12px;
+    }
+    label {
+      color: var(--muted); font-size: 12px; letter-spacing: 0.3px;
+    }
+    select, input[type="text"], input[type="date"], textarea, button.primary {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid var(--panel-border);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      padding: 12px 14px;
+      outline: none;
+      min-height: 44px; /* touch-friendly */
+    }
+    select, input, textarea { box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); }
+    textarea { resize: vertical; }
+    button.primary {
+      background: linear-gradient(180deg, rgba(46,208,255,0.18), rgba(46,208,255,0.10));
+      border-color: rgba(46,208,255,0.35);
+      text-shadow: 0 0 18px rgba(46,208,255,0.35);
+      backdrop-filter: blur(6px);
+      cursor: pointer;
+      margin-top: 6px;
+    }
+    .chips {
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+    .chip {
+      padding: 10px 12px; border-radius: 999px;
+      background: var(--chip-bg); border: 1px solid var(--chip-br);
+      font-size: 13px; cursor: pointer; min-height: 36px; display: inline-flex; align-items: center;
+      transition: 150ms ease;
+    }
+    .chip.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 16px rgba(46,208,255,0.35);
+    }
+    .main {
+      display: grid;
+      grid-template-rows: auto;
+      gap: var(--gap);
+      height: 100%;
+      min-width: 0;
+    }
+    .panel { padding: 16px; }
+    .panels {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--gap);
+      align-items: start;
+    }
+    .muted { color: var(--muted); }
+    .controls {
+      display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;
+    }
+    .btn {
+      padding: 12px 14px; border-radius: 10px; border: 1px solid var(--panel-border);
+      background: rgba(255,255,255,0.04); color: var(--text); cursor: pointer; min-height: 44px;
+    }
+    .btn.accent {
+      border-color: rgba(46,208,255,0.45);
+      box-shadow: 0 0 18px rgba(46,208,255,0.25);
+    }
+    .export-list { display: grid; gap: 8px; }
+    .export-list .btn { text-align: left; }
+    .caption { font-size: 12px; color: var(--muted); margin-top: 8px; }
+    .nowrap { white-space: nowrap; }
+    .wrap {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    /* Collapsible (pivot) */
+    .pivot {
+      display: flex; align-items: center; gap: 8px; cursor: pointer;
+      user-select: none;
+    }
+    .pivot .arrow {
+      display: inline-block; width: 12px; height: 12px;
+      transform: rotate(0deg);
+      transition: transform 160ms ease;
+      color: var(--icon);
+    }
+    .pivot.open .arrow { transform: rotate(90deg); }
+    .pivot + .pivot-content { display: none; margin-top: 8px; }
+    .pivot.open + .pivot-content { display: block; }
+
+    mark { background: rgba(46,208,255,0.25); padding: 0 2px; border-radius: 3px; }
+
+    /* Tablet */
+    @media (max-width: 1200px) {
+      .panels { grid-template-columns: 1fr; }
+    }
+    /* Mobile */
+    @media (max-width: 900px) {
+      .app {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding: 12px;
+      }
+      .sidebar {
+        position: static;
+        height: auto;
+        top: auto;
+        overflow: visible;
+        order: 0;
+      }
+      .main { order: 1; }
+      .chips { gap: 6px; }
+      .btn, button.primary { width: 100%; }
+    }
+    /* Very small phones */
+    @media (max-width: 600px) {
+      :root { --gap: 12px; }
+      .panel, .card { padding: 14px; }
+      .chips .chip { font-size: 12px; padding: 8px 10px; }
+      label { font-size: 11px; }
+    }
+  </style>
+</head>
+<body data-theme="dark">
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <!-- Logo (inline SVG) -->
+      <div class="brand">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="9" stroke="var(--accent)" stroke-width="1.5"/>
+          <path d="M7 12h10M12 7v10" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <div class="name">ConfiDoc</div>
+      </div>
+
+      <div class="toggle">
+        <input id="themeToggle" type="checkbox" />
+        <label for="themeToggle">Dark mode</label>
+      </div>
+
+      <div class="label-pill">Document Inputs</div>
+
+      <div class="card">
+        <h3>Document Type</h3>
+        <div class="field">
+          <label>Choose a profile</label>
+          <select id="docType">
+            <option>NDA - Standard</option>
+            <option>NDA - Joinder</option>
+            <option>Access Letter - NRL</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Document Inputs</h3>
+        <div class="field">
+          <label>Lender (legal name)</label>
+          <input id="lenderName" type="text" placeholder="e.g., ABC Bank, N.A."/>
+        </div>
+        <div class="field">
+          <label>Counterparty (legal name)</label>
+          <input id="counterpartyName" type="text" placeholder="e.g., SampleCo LLC"/>
+        </div>
+        <div class="field">
+          <label>Effective Date</label>
+          <input id="effectiveDate" type="date" />
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Upload</h3>
+        <div class="field">
+          <input type="file" />
+        </div>
+        <div class="caption">Recent uploads will appear here.</div>
+      </div>
+
+      <div class="card">
+        <h3>Paste Clause</h3>
+        <div class="field">
+          <textarea rows="5" placeholder="Paste a clause to analyze..."></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Provision Type <span class="muted">(optional)</span></h3>
+        <div class="field">
+          <select id="provisionType">
+            <option>Auto-detect</option>
+            <option>Return/Destroy</option>
+            <option>Confidentiality</option>
+            <option>General</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="primary" id="startAnalysis">Start Analysis</button>
+
+      <div class="card">
+        <h3>Recent Uploads</h3>
+        <div class="caption">Document Queue</div>
+      </div>
+      <!-- Export card removed from sidebar per request -->
+    </aside>
+
+    <main class="main">
+      <section class="panel">
+        <!-- Label reduced from h2 to h3 to match other panels -->
+        <h3>Document Provisions</h3>
+        <div class="chips" id="provisionChips">
+          <div class="chip" data-key="conf">Confidentiality</div>
+          <div class="chip" data-key="rd">Return / Destroy</div>
+          <div class="chip" data-key="term">Term / Termination</div>
+          <div class="chip" data-key="law">Governing Law</div>
+          <div class="chip" data-key="ns">Non-Solicit</div>
+        </div>
+        <p class="muted wrap">Select a provision chip to view an excerpt with highlights.</p>
+        <div id="excerpt" class="card" style="padding:12px; display:none;">
+          <div class="muted">Excerpt will appear here after selecting a provision.</div>
+        </div>
+        <div class="controls">
+          <button class="btn" id="noteBtn">Note</button>
+          <button class="btn" id="flagBtn">Flag</button>
+          <button class="btn" id="copyBtn">Copy</button>
+        </div>
+      </section>
+
+      <!-- Viewer moved to be directly below Document Provisions -->
+      <section class="panel" id="viewerPanel">
+        <h3>Viewer</h3>
+        <p class="muted">Full Document / Redlines will render here.</p>
+      </section>
+
+      <div class="panels">
+        <section class="panel" id="benchPanel">
+          <h3>Benchmark Requirements</h3>
+
+          <div class="pivot" data-pivot="purpose">
+            <span class="arrow">▸</span><span>Purpose</span>
+          </div>
+          <div class="pivot-content" id="purposeContent">
+            <p class="muted">Explains the intent of the selected provision and how it should function in the agreement.</p>
+          </div>
+
+          <div class="pivot" data-pivot="lang">
+            <span class="arrow">▸</span><span>Benchmark Language</span>
+          </div>
+          <div class="pivot-content" id="langContent">
+            <p class="muted">No standard benchmark provision.</p>
+          </div>
+
+          <div class="pivot" data-pivot="minreq">
+            <span class="arrow">▸</span><span>Minimum Requirements</span>
+          </div>
+          <div class="pivot-content" id="minreqContent">
+            <p class="muted">No minimum requirements.</p>
+          </div>
+        </section>
+
+        <section class="panel" id="resultsPanel">
+          <h3>Results and Response</h3>
+
+          <div class="pivot" data-pivot="compliance">
+            <span class="arrow">▸</span><span>Provision Compliance</span>
+          </div>
+          <div class="pivot-content" id="complianceContent">
+            <p class="muted">Select a provision and run analysis to see compliance results.</p>
+          </div>
+
+          <div class="pivot" data-pivot="response">
+            <span class="arrow">▸</span><span>Response Options</span>
+          </div>
+          <div class="pivot-content" id="responseContent">
+            <div class="chips">
+              <div class="chip">Accept Provision</div>
+              <div class="chip">Use Benchmark</div>
+              <div class="chip">Apply Minimum Requirements</div>
+            </div>
+            <div class="controls" style="margin-top:14px;">
+              <button class="btn accent" id="applySelection">Apply Selection</button>
+            </div>
+          </div>
+
+          <div class="pivot" data-pivot="log">
+            <span class="arrow">▸</span><span>Decision Log</span>
+          </div>
+          <div class="pivot-content" id="logContent">
+            <div class="card" style="padding:10px;">
+              <div class="muted" id="logEmpty">No decisions yet.</div>
+            </div>
+          </div>
+
+          <!-- Export & Provenance moved here to the bottom of Results -->
+          <div class="pivot" data-pivot="export">
+            <span class="arrow">▸</span><span>Export &amp; Provenance</span>
+          </div>
+          <div class="pivot-content">
+            <div class="export-list">
+              <button class="btn">Export PDF Summary</button>
+              <button class="btn">Export Word Redlines</button>
+              <button class="btn">Export CSV Log</button>
+            </div>
+            <div class="caption">Snapshot / Provenance: <a href="#" style="color:var(--accent);">Open Audit Snapshot</a></div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Theme
+    const toggle = document.getElementById('themeToggle');
+    const applyTheme = () => {
+      document.body.setAttribute('data-theme', toggle.checked ? 'dark' : 'light');
+    };
+    toggle.checked = true;
+    applyTheme();
+    toggle.addEventListener('change', applyTheme);
+
+    // Collapsible (pivot) handlers
+    document.querySelectorAll('.pivot').forEach(p => {
+      p.addEventListener('click', () => {
+        p.classList.toggle('open');
+      });
+    });
+
+    // Provisions: pill click behavior + highlight excerpt
+    const excerpts = {
+      conf: "The Receiving Party shall keep all <mark>Confidential Information</mark> strictly confidential and shall not disclose it except as permitted herein.",
+      rd: "Upon termination, the Receiving Party shall <mark>return or destroy</mark> all Confidential Information within ten (10) days.",
+      term: "This Agreement shall remain in effect for a period of <mark>two (2) years</mark> from the Effective Date unless terminated earlier.",
+      law: "This Agreement shall be governed by and construed in accordance with the laws of the <mark>State of New York</mark>.",
+      ns: "The Receiving Party agrees that it will not <mark>solicit</mark> any employees of the Disclosing Party for the duration of the Agreement."
+    };
+
+    const chips = document.querySelectorAll('#provisionChips .chip');
+    const excerptBox = document.getElementById('excerpt');
+    const benchPurpose = document.getElementById('purposeContent').querySelector('p');
+    const complianceP = document.getElementById('complianceContent').querySelector('p');
+
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        // active state
+        chips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+
+        // populate excerpt with highlight
+        const key = chip.getAttribute('data-key');
+        const text = excerpts[key] || "No excerpt available.";
+        excerptBox.style.display = 'block';
+        excerptBox.innerHTML = '<p>' + text + '</p>';
+
+        // update benchmark purpose & compliance stub to show "reactivation"
+        if (benchPurpose) benchPurpose.textContent = "Purpose loaded for " + chip.textContent + ".";
+        if (complianceP) complianceP.textContent = chip.textContent + " appears partially compliant (demo).";
+      });
+    });
+
+    // Simulated Apply Selection action -> add line to Decision Log
+    document.getElementById('applySelection').addEventListener('click', () => {
+      const logEmpty = document.getElementById('logEmpty');
+      const entry = document.createElement('div');
+      entry.style.marginTop = '8px';
+      entry.textContent = "Applied selection at " + new Date().toLocaleString();
+      if (logEmpty) {
+        logEmpty.parentElement.appendChild(entry);
+        logEmpty.remove();
+      } else {
+        document.getElementById('logContent').querySelector('.card').appendChild(entry);
+      }
+      // On mobile, scroll to export section to continue the flow
+      const exportPivot = document.querySelector('[data-pivot="export"]');
+      if (exportPivot && window.matchMedia('(max-width: 900px)').matches) {
+        exportPivot.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  </script>
+</body>
+</html>
