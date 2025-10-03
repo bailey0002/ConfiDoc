@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ConfiDoc UI v0012_2c - Updated</title>
+    <!-- Minimal styles for mockup readability; assume original CSS is applied -->
+    <style>
+        /* Placeholder styles to match original mockup structure */
+        body { font-family: sans-serif; }
+        .dashboard { float: left; width: 20%; }
+        .nav-bar { clear: both; }
+        .intake-panel, .review-panel, .final-panel { display: block; }
+        /* Add glow/color to parsing status as specified */
+        .parsing-status { background: #e0f7fa; color: #00796b; border: 1px solid #00796b; padding: 5px; box-shadow: 0 0 10px #00796b; }
+    </style>
+</head>
+<body>
+
+    <!-- Dashboard Sidebar (Static) -->
+    <div class="dashboard">
+        <h2>Dashboard</h2>
+        <div class="quick-start">
+            <h3>Start a Review</h3>
+            <p>To bypass analysis and generate a revised version using Minimum Required language.</p>
+            <select>
+                <option selected>NDA</option>
+                <option>Joinder</option>
+                <option>NRL (Access Letter)</option>
+            </select>
+            <input type="file" accept=".docx,.pdf">
+            <button>Upload</button>
+        </div>
+        <div class="recent-docs">
+            <h3>Recent</h3>
+            <ul>
+                <li>NDA — Swift vs. Harlow Bio</li>
+                <li>NDA — Nova Capital / Helix AI</li>
+                <li>NDA — Orion Partners</li>
+            </ul>
+            <div class="team-compliance">Team: Avg first-pass compliance 64%</div>
+        </div>
+        <footer>
+            © ConfiDoc
+            <a href="#">Privacy</a>
+        </footer>
+    </div>
+
+    <!-- Navigation Bar (Top Bar - Static) -->
+    <div class="nav-bar">
+        <div class="navigation-links">
+            <h3>Navigation</h3>
+            <button>1 Intake</button>
+            <button>2 Review</button>
+            <button>3 Final</button>
+            <div class="parsing-status">Parsing provisions…</div> <!-- Moved here, right of Final, with color/glow; tracks progress functionally -->
+        </div>
+        <div class="dark-mode">
+            Dark Mode
+            <input type="checkbox" role="switch"> <!-- Replaced checkbox with toggle (using role=switch for semantics) -->
+        </div>
+        <button>Export</button>
+    </div>
+
+    <!-- Intake Phase (Tri-Panel: Intake Left, Flagged Provisions Middle, Notes Right) -->
+    <div class="intake-panel">
+        <div class="left-panel"> <!-- Intake Card -->
+            <h3>Intake</h3>
+            <p>DOCX-first. PDF supported but typically converted.</p>
+            <input type="file" accept=".docx,.pdf" placeholder="Upload NDA (.docx)">
+            <select class="demo-template-dropdown"> <!-- Replaced with NDA/Joinder/NRL, NDA default -->
+                <option selected>NDA</option>
+                <option>Joinder</option>
+                <option>NRL (Access Letter)</option>
+            </select>
+            <div class="document-info"> <!-- Renamed from Parties (Optional) -->
+                <h4>Document Information</h4>
+                <input type="text" placeholder="Lender legal name (prefilled)">
+                <input type="text" placeholder="Counterparty legal name">
+                <input type="date" placeholder="Effective date (YYYY-MM-DD)">
+                <input type="text" placeholder="Specific concerns/issues"> <!-- Added fourth field -->
+            </div>
+            <button class="primary">Start Analysis</button> <!-- Renamed from Proceed to Review -->
+            <button class="secondary">Auto-Fix Simple</button>
+        </div>
+        <div class="middle-panel"> <!-- Flagged Provisions (Moved here from Review, replaces Minimal Requirements) -->
+            <h3>Flagged Provisions</h3>
+            <div class="progress">0/3 resolved</div>
+            <div class="severity-filter">
+                <label><input type="checkbox" checked>All severities</label>
+                <label><input type="checkbox">High</label>
+                <label><input type="checkbox">Medium</label>
+                <label><input type="checkbox">Low</label>
+            </div>
+            <div class="type-filter">
+                <label><input type="checkbox" checked>All types</label>
+                <label><input type="checkbox">Use</label>
+                <label><input type="checkbox">Residuals</label>
+                <label><input type="checkbox">Return/Destroy</label>
+            </div>
+            <p>Click Issue to Highlight Provision:</p>
+            <ul>
+                <li>High: Use of Information — “any business purpose” Rule NDA-UR-01 • §2</li>
+                <li>Med: Residuals — “survive termination” Rule NDA-RS-04 • §4</li>
+                <li>Low: Return/Destroy — “reasonable time” Rule NDA-RD-02 • §5</li>
+            </ul>
+        </div>
+        <div class="right-panel"> <!-- Notes -->
+            <h3>Notes</h3>
+            <textarea>Configure benchmark/tolerance now. Parties are optional and can be filled later before export.</textarea>
+        </div>
+    </div>
+
+    <!-- Review Phase (Bi-Panel: Document Viewer Left, Modification Decisions Right) -->
+    <div class="review-panel">
+        <div class="left-panel"> <!-- Document Viewer -->
+            <h3>Document Viewer</h3>
+            <button>Excerpt Mode</button>
+            <button>Next Issue</button>
+            <div class="doc-text">
+                <p>1. Purpose. The parties intend to explore a potential transaction and will exchange Confidential Information (“CI”).</p>
+                <!-- ... full text as in original ... -->
+            </div>
+            <div class="excerpts">
+                <!-- ... excerpts as in original ... -->
+            </div>
+        </div>
+        <div class="right-panel"> <!-- Modification Decisions (Flagged Provisions moved out) -->
+            <h3>Modification Decisions</h3>
+            <p>Select a flagged provision or highlighted span.</p>
+            <div class="decision-btn-group">
+                <button>Accept</button>
+                <button>Minimal</button>
+                <button>Benchmark</button>
+                <button>Custom</button> <!-- Updated description in Excel -->
+            </div>
+            <button>Apply Change</button> <!-- Renamed from Apply Custom -->
+            <button>Undo</button>
+            <div class="provision-summary">
+                Provision Summary: Aligns with lender tolerance. Benchmark cite shown here.
+            </div>
+            <div class="clause-preview">
+                This clause only (preview) —
+            </div>
+            <div class="progress-bar">0/3 resolved</div>
+            <!-- Keyboard Shortcuts deleted -->
+        </div>
+    </div>
+
+    <!-- Final Phase (Bi-Panel: Viewer Left, Export Options Right) -->
+    <div class="final-panel">
+        <div class="left-panel"> <!-- Viewer (Card 1) -->
+            <h3>Finalize & Export</h3>
+            <label><input type="checkbox"> I confirm all changes have been reviewed and approved in compliance with lender guidelines.</label>
+            <div class="view-tabs">
+                <button>Original</button>
+                <button>Revised</button>
+                <button>Redline</button>
+                <button>Audit Log</button>
+            </div>
+        </div>
+        <div class="right-panel"> <!-- Decision Log (Card 2) and Export (Card 3) -->
+            <table>
+                <thead>
+                    <tr><th>Issue</th><th>Decision</th><th>Rule</th><th>Rationale</th></tr>
+                </thead>
+                <tbody><!-- Empty as in original --></tbody>
+            </table>
+            <div class="export-format">
+                Export Format
+                <label><input type="radio" name="format" checked> Word</label>
+                <label><input type="radio" name="format"> PDF</label>
+            </div>
+            <p>Pending: resolve High/Med, pass checklist, and confirm sign-off.</p>
+            <button>Download Redline</button>
+            <button>Download Clean</button>
+            <button>Decision Log (CSV)</button>
+        </div>
+    </div>
+
+</body>
+</html>
